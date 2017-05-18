@@ -1,0 +1,43 @@
+body {
+    margin: auto;
+    max-width: 650px;
+    line-height: 1.6;
+    font-size: 18px;
+    color: #444;
+    padding: 0 10px min-height: 100%;
+}
+
+div {
+    display: flex;
+    align-self: center;
+}
+
+.ok {
+    color: green;
+}
+
+.no {
+    color: red;
+}
+
+ul {
+    list-style: none;
+}
+
+li img {
+    width: 18px;
+    height: 18px;
+}
+
+
+footer {
+    font-size: 10px;
+    margin: 10px auto;
+    position: absolute;
+    bottom: 0;
+}
+
+#irce {
+    font-size: 14px;
+    margin-top: 30px;
+}
