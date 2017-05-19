@@ -10,11 +10,16 @@
     <div>
         <h4>Aktualny stan czanów:</h4>
         <ul>
-            {%for site, state in chans.items() %}
-                {% if state == "jeździ" %}
-                    <li class="ok"><img alt="✓" src="{{url_for('static', filename='jezdzi.svg')}}"> {{site}}: {{state}}</li>
+            {%for chan in chans %}
+                {% if chan.OK %}
+                    <li class="ok">
+                    <img alt="✓" src="{{url_for('static', filename='jezdzi.svg')}}"> {{chan.name}}: {{chan.status}}
+                    {% if chan.users_online %}
+                    | online: {{chan.users_online}}
+                    {% endif %}
+                    </li>
                 {% else %}
-                    <li class="no"><img alt="❌" src="{{url_for('static', filename='spadlo.svg')}}"> {{site}}: {{state}}</li>
+                    <li class="no"><img alt="❌" src="{{url_for('static', filename='spadlo.svg')}}"> {{chan.name}}: {{chan.status}}</li>
                 {% endif %}
             {% endfor %}
         </ul>

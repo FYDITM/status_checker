@@ -7,16 +7,51 @@ import threading
 import time
 import logging
 import logging.handlers
+from chan_stats import ChanStats
+
+# karol_present = False
+# try:
+#     import karol_api as karol
+#     karol_present = True
+# except:
+#     karol_present = False
 
 app = Flask(__name__)
 
-chans = OrderedDict()
+chans = []
 irc_servs = OrderedDict()
 running = False
 sleep_minutes = 5
 last_check = None
 log_level = logging.INFO
 logger = None
+
+
+def initialize():
+    init_logger()
+    log("Inicjalizacja...", logging.DEBUG)
+    global chans
+    chans = [
+        ChanStats('kara', 'karachan.org/*/')
+        .users_online_settings("http://karachan.org/online.php", "createTextNode('", "'), a.nextSibling"),
+        ChanStats('vi', 'pl.vichan.net/*/')
+        .users_online_settings("https://pl.vichan.net/online.php", "innerHTML+='", "| Aktywne"),
+        ChanStats("wilno", "wilchan.org")
+        .users_online_settings("https://wilchan.org/licznik.php"),
+        ChanStats("heretyk", "heretyk.org"),
+        # do sprawdzenia online potrzeba ustawionego ciasteczka z zaakceptowanym regulaminem :/
+        ChanStats("kiwi", "kiwiszon.org/kusaba.php"),
+        ChanStats("sis", "sischan.xyz")
+        .users_online_settings("http://sischan.xyz/online.php", "TextNode('", "'), a.next"),
+        ChanStats("lenachan", "lenachan.eu.org"),
+        ChanStats("żywegówno", "zywegowno.club"),
+        ChanStats("rybik", "rybik.ga"),
+        ChanStats("chanarchive", "chanarchive.pw")
+    ]
+    try:
+        start_checking()
+    except Exception as e:
+        log("Problem przy startowaniu pętli sprawdzającej: " + e, logging.ERROR)
 
 
 def init_logger():
@@ -35,58 +70,41 @@ def log(text, level):
 
 
 def report_status(address, status_code):
-    msg = "Wygląda na to, że {0} nie jeździ. Kod statusu: {1}".format(
-        address, status_code)
-    log(msg, logging.INFO)
-    # można wysłać do Karola czy coś
-
-
-def parse_status(address):
-    result = ""
-    status_code = check_status(address)
-    if 200 <= status_code < 300:
-        return "jeździ"
-    else:
-        report_status(address, status_code)
-        result += "spadł z rowerka"
+    msg = "Wygląda na to, że {0} spadł z rowerka. ".format(address)
     if status_code != -1:
-        result += "(kod statusu: " + str(status_code) + ")"
-    return result
+        msg += "Kod statusu {0}".format(status_code)
+    log(msg, logging.INFO)
+    # if karol_present:
+    #     if "vichan" in address:
+    #         msg = "czaks: " + msg
+    #     karol.send_message(msg)
 
 
 def check_irc_server(server):
     global irc_servs
+    result = ""
     address = "http://" + server + ".6irc.net"
-    irc_servs[server] = parse_status(address)
-
-
-def check_site_status(name, site):
-    global chans
-    address = "http://" + site
-    chans[name] = parse_status(address)
-
-
-def check_status(address):
     try:
-        request = requests.get(address, verify=False)
+        status_code = requests.get(address).status_code
     except:
-        return -1
-    return request.status_code
+        status_code = -1
+    if 200 <= status_code < 300:
+        irc_servs[server] = "jeździ"
+        return
+    else:
+        result += "spadł z rowerka"
+    if status_code != -1:
+        result += "(kod statusu: " + str(status_code) + ")"
+    irc_servs[server] = result
 
 
 def check_continously():
     global last_check
     while running:
         log("Sprawdzam statusy serwisów...", logging.DEBUG)
-        check_site_status("kara", "karachan.org/b")
-        check_site_status("vi", "pl.vichan.net")
-        check_site_status("wilno", "wilchan.org")
-        check_site_status("heretyk", "heretyk.org")
-        check_site_status("kiwi", "kiwiszon.org/kusaba.php")
-        check_site_status("sis", "sischan.xyz")
-        check_site_status("lenachan", "lenachan.eu.org")
-        check_site_status("żywegówno", "zywegowno.club")
-        check_site_status("chanarchive", "chanarchive.pw")
+        for chan in chans:
+            chan.parse_status()
+            chan.check_users_online()
 
         check_irc_server("polarity")
         check_irc_server("sundance")
@@ -119,13 +137,7 @@ def hello():
     return render_template('index.html', chans=chans, irc_servs=irc_servs, last_check=last_check)
 
 
-init_logger()
-log("Start aplikacji", logging.DEBUG)
-if not running:
-    try:
-        start_checking()
-    except Exception as e:
-        log("Problem przy startowaniu pętli sprawdzającej: " + e, logging.ERROR)
+initialize()
 if __name__ == "__main__":
     try:
         app.run()

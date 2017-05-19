@@ -6,7 +6,6 @@
 
 ### TODO:
  - Licznik postów na godzinę
- - Licznik userów online 
  - Moduł powiadamiający o spadnięciu
 
 
