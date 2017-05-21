@@ -9,6 +9,7 @@ import logging
 import logging.handlers
 import random
 from chan_stats import ChanStats
+from lxml import html
 
 # karol_present = False
 # try:
@@ -124,6 +125,36 @@ def start_checking():
     checking_fred.start()
 
 
+def to_seconds(t):
+    seconds = time.mktime(t.timetuple())
+    return seconds
+
+def posts_lasthour(time_diff=-7200):
+    page = requests.get('http://pl.vichan.net/*/')
+    tree = html.fromstring(page.content)
+
+    times = tree.xpath('//time/@datetime')
+
+    times_seconds = [time.mktime(datetime.strptime(t, '%Y-%m-%dT%H:%M:%SZ').timetuple())
+                     for t in times]
+
+    times_seconds.sort()
+    post_count = len(times_seconds)
+
+    now_seconds = to_seconds(datetime.now())
+    hour_ago = now_seconds - 3600
+    fivemin_ago = now_seconds - (60*5)
+
+
+    # powiedzmy jakbys zapostowal teraz
+    # - 7200 bo strefa czasowa, nie znam sie 
+    posts = 0
+    for t in times_seconds[:-1]:
+        if t > hour_ago + time_diff:
+            posts += 1
+
+    return posts
+
 @app.route("/")
 def hello():
     ip = request.environ["REMOTE_ADDR"]
@@ -136,7 +167,10 @@ def hello():
         view += " Referer:" + request.environ["HTTP_REFERER"]
     trk = random.choice(range(trk_count))
     log(view, logging.INFO)
-    return render_template('index.html', chans=chans, irc_servs=irc_servs, last_check=last_check, trk=trk)
+
+    posts_lasthour = posts_lasthour()
+
+    return render_template('index.html', chans=chans, irc_servs=irc_servs, last_check=last_check, trk=trk, post_count=posts_lasthour)
 
 
 initialize()
