@@ -15,6 +15,7 @@ class ChanStats:
         self.users_online_url = False
         if "http://" not in self.address:
             self.address = "http://" + self.address
+        self.posts_per_hour = False
 
     def check_status(self):
         try:
