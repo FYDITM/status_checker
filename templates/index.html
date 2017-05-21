@@ -18,7 +18,8 @@
         <ul>
             {%for chan in chans %} {% if chan.OK %}
             <li class="ok">
-                <img alt="✓" src="{{url_for('static', filename='jezdzi.svg')}}"> {{chan.name}}: {{chan.status}} {% if chan.users_online %} | online: {{chan.users_online}} {% endif %} | posty/h: {{post_count}}
+                <img alt="✓" src="{{url_for('static', filename='jezdzi.svg')}}"> {{chan.name}}: {{chan.status}} {% if chan.users_online %} | online: {{chan.users_online}} {% endif %} |
+                {% if chan.post_per_hour %} posty/h: {{post_count}} {% endif %}
             </li>
             {% else %}
             <li class="no"><img alt="❌" src="{{url_for('static', filename='spadlo.svg')}}"> {{chan.name}}: {{chan.status}}</li>
