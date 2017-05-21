@@ -51,6 +51,9 @@ def initialize():
         ChanStats("rybik", "rybik.ga"),
         ChanStats("chanarchive", "chanarchive.pw")
     ]
+    
+    chans[1].posts_per_hour = True
+    
     try:
         start_checking()
     except Exception as e:
@@ -129,7 +132,7 @@ def to_seconds(t):
     seconds = time.mktime(t.timetuple())
     return seconds
 
-def posts_lasthour(time_diff=-7200):
+def posts_lasthour_vi(time_diff=-7200):
     page = requests.get('http://pl.vichan.net/*/')
     tree = html.fromstring(page.content)
 
@@ -168,9 +171,9 @@ def hello():
     trk = random.choice(range(trk_count))
     log(view, logging.INFO)
 
-    posts_lasthour = posts_lasthour()
+    posts_lasthour_vi = posts_lasthour_vi()
 
-    return render_template('index.html', chans=chans, irc_servs=irc_servs, last_check=last_check, trk=trk, post_count=posts_lasthour)
+    return render_template('index.html', chans=chans, irc_servs=irc_servs, last_check=last_check, trk=trk, post_count=posts_lasthour_vi)
 
 
 initialize()
