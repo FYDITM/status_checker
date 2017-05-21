@@ -7,6 +7,7 @@ import threading
 import time
 import logging
 import logging.handlers
+import random
 from chan_stats import ChanStats
 
 # karol_present = False
@@ -22,6 +23,7 @@ chans = []
 irc_servs = OrderedDict()
 running = False
 sleep_minutes = 5
+trk_count = 4
 last_check = None
 log_level = logging.INFO
 logger = None
@@ -132,9 +134,9 @@ def hello():
         user_agent=request.environ["HTTP_USER_AGENT"])
     if "HTTP_REFERER" in request.environ:
         view += " Referer:" + request.environ["HTTP_REFERER"]
-
+    trk = random.choice(range(trk_count))
     log(view, logging.INFO)
-    return render_template('index.html', chans=chans, irc_servs=irc_servs, last_check=last_check)
+    return render_template('index.html', chans=chans, irc_servs=irc_servs, last_check=last_check, trk=trk)
 
 
 initialize()

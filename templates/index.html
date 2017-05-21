@@ -3,45 +3,44 @@
 
 <head>
     <title>Czy twoje ulubione forum o kupie jeździ na rowerku?</title>
-      <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='style.css')}}">
+    <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='style.css')}}">
 </head>
 
 <body>
+    <div class="background">
+        <video loop autoplay  class="background-vid">
+            <source src="static/trk{{trk}}.webm" type="video/webm">
+        </video>
+    </div>
+    <div class="content">
     <div>
         <h4>Aktualny stan czanów:</h4>
         <ul>
-            {%for chan in chans %}
-                {% if chan.OK %}
-                    <li class="ok">
-                    <img alt="✓" src="{{url_for('static', filename='jezdzi.svg')}}"> {{chan.name}}: {{chan.status}}
-                    {% if chan.users_online %}
-                    | online: {{chan.users_online}}
-                    {% endif %}
-                    </li>
-                {% else %}
-                    <li class="no"><img alt="❌" src="{{url_for('static', filename='spadlo.svg')}}"> {{chan.name}}: {{chan.status}}</li>
-                {% endif %}
-            {% endfor %}
+            {%for chan in chans %} {% if chan.OK %}
+            <li class="ok">
+                <img alt="✓" src="{{url_for('static', filename='jezdzi.svg')}}"> {{chan.name}}: {{chan.status}} {% if chan.users_online %} | online: {{chan.users_online}} {% endif %}
+            </li>
+            {% else %}
+            <li class="no"><img alt="❌" src="{{url_for('static', filename='spadlo.svg')}}"> {{chan.name}}: {{chan.status}}</li>
+            {% endif %} {% endfor %}
         </ul>
     </div>
     <div id="irce">
-       <h5> Aktualny stan serwerów irc:</h5>
+        <h5> Aktualny stan serwerów irc:</h5>
         <ul>
-            {% for serv, state in irc_servs.items() %}
-                {% if state == "jeździ" %}
-                    <li class="ok"><img alt="✓" src="{{url_for('static', filename='jezdzi.svg')}}"> {{serv}}: {{state}}</li>
-                {% else %}
-                    <li class="no"><img alt="❌" src="{{url_for('static', filename='spadlo.svg')}}"> {{serv}}: {{state}}</li>
-                {% endif %}
-            {% endfor %}
+            {% for serv, state in irc_servs.items() %} {% if state == "jeździ" %}
+            <li class="ok"><img alt="✓" src="{{url_for('static', filename='jezdzi.svg')}}"> {{serv}}: {{state}}</li>
+            {% else %}
+            <li class="no"><img alt="❌" src="{{url_for('static', filename='spadlo.svg')}}"> {{serv}}: {{state}}</li>
+            {% endif %} {% endfor %}
         </ul>
     </div>
     <footer>
-    {% if last_check %}
-    <span>Sprawdzono: {{last_check.strftime("%Y-%m-%d %X")}}</span>
-    {% endif %}
-    <div>Dej na serwer i rozwój: 1DtFVtQt1p5Vfmq1wCN8A4vAaj9GsJ3y5w</div>
+        {% if last_check %}
+        <div>Sprawdzono: {{last_check.strftime("%Y-%m-%d %X")}}</div> {% endif %}
+        <div>Dej na serwer i rozwój: 1DtFVtQt1p5Vfmq1wCN8A4vAaj9GsJ3y5w</div>
     </footer>
+    </div>
 </body>
 
 </html>
