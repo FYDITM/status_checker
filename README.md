@@ -5,8 +5,8 @@
  - Flask (`pip install Flask`)
 
 ### TODO:
- - Licznik postów na godzinę
- - Moduł powiadamiający o spadnięciu
+ - Wykresy userów online i postów na godzinę
+ - Potencjalnie poprawki układu strony
 
 
 ### Licencja
