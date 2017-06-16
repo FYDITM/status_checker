@@ -52,7 +52,7 @@ class ChanStats:
 
     def check_status(self):
         try:
-            request = requests.get(self.address, verify=False)
+            request = requests.get(self.address, verify=False, timeout=20)
         except:
             return -1
         return request.status_code

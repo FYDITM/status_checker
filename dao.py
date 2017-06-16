@@ -2,10 +2,12 @@ import sqlite3
 from datetime import datetime, timedelta
 
 # schemat tabeli chan_stats:
-# id (autoinkrementowany klucz) | chan_name (text) | date (jako timestamp) | ok (czy jeździ, 1 lub 0) | users (ile online) | posts_per_hour (real)
+# id (autoinkrementowany klucz) | chan_name (text) | date (jako timestamp)
+# | ok (czy jeździ, 1 lub 0) | users (ile online) | posts_per_hour (real)
 
 # schemat tabeli posts:
 # id (autoinkrementowany klucz) | chan_name (text) | date (jako str) | board (text) | post_id (integer)
+dateformat = "%Y-%m-%d %H:%M:%S.%f"
 
 
 class DatabaseConnector():
@@ -49,7 +51,61 @@ class DatabaseConnector():
         else:
             return None
 
-    #def get_stats(self, chan_name, date_from, date_to)
+    def get_stats(self, chan_name, date_from, date_to):
+        self.cur.execute("SELECT * FROM chan_stats WHERE chan_name=? AND date BETWEEN ? and ?",
+                         (chan_name, date_from, date_to))
+        return self.cur.fetchall()  # [(id, chan_name, date, ok, users, posts_per_hour)]
+
+    def parse_stats(self, stats):
+        """
+        Zwraca sparsowane dane w formacie [(date, chan_name, users, posts_per_hour)]
+        """
+        return list(map(lambda x: (datetime.strptime(x[2], dateformat), x[1], x[4], x[5]), stats))
+
+    def calculate_average(self, chan_name, date_from, date_to):
+        """
+        Zwraca wyliczone średnie w formacie [(period, avg_users, avg_posts)],
+        gdzie period to poszczególne okresy (dni lub miesiące)
+        """
+        stats_list = self.parse_stats(self.get_stats(chan_name, date_from, date_to))
+        period = date_to - date_from
+        if period.days < 3:
+            return list(map(lambda x: (x[0].strftime("%Y-%m-%d %H:%M"), x[2], x[3]), stats_list))
+        result = []
+        day = date_from.date()
+        count = 0
+        posts_total = 0
+        users_total = 0
+        for record in stats_list:
+            if record[0].date() == day:
+                users_total += record[2]
+                posts_total += record[3]
+                count += 1
+            else:
+                result.append((day, users_total / count, posts_total / count))
+                day = record[0].date()
+                count = 1
+                users_total = record[2]
+                posts_total = record[3]
+        if period.days >= 90:
+            months_result = []
+            month = date_from.month
+            count = 0
+            posts_total = 0
+            users_total = 0
+            for record in result:
+                if record[0].month == month:
+                    users_total += record[1]
+                    posts_total += record[2]
+                    count += 1
+                else:
+                    months_result.append((month, users_total / count, posts_total / count))
+                    month = record[0].month
+                    count = 1
+                    users_total = record[1]
+                    posts_total = record[2]
+            result = months_result
+        return result
 
     def dispose(self):
         self.conn.close()

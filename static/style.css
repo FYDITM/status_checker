@@ -16,6 +16,10 @@ div {
     color: green;
 }
 
+.ok a:link, .ok a:visited {
+    color: green;
+}
+
 .no {
     color: red;
 }

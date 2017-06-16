@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from flask import Flask, request, render_template
+from flask import Flask, request, render_template, abort, json
 from datetime import datetime, timedelta
 from collections import OrderedDict
 import requests
@@ -160,20 +160,53 @@ def start_checking():
     checking_fred.start()
 
 
-@app.route("/")
-def hello():
+def get_user_agent(request):
     ip = request.environ["REMOTE_ADDR"]
     if "X-Forwarded-For" in request.environ:
         ip = request.environ["X-Forwarded-For"]
-    view = "Wejście z {ip}: {user_agent}.".format(
+    view = "{ip}: {user_agent}.".format(
         ip=ip,
         user_agent=request.environ["HTTP_USER_AGENT"])
     if "HTTP_REFERER" in request.environ:
         view += " Referer:" + request.environ["HTTP_REFERER"]
+    return view
+
+
+@app.route("/stats/<chan_name>", methods=['GET', 'POST'])
+def show_stats(chan_name):
+    date_from = None
+    date_to = None
+    try:
+        date_from = request.form['date_from']
+        date_to = request.form['date_to']
+    except:
+        if not date_from:
+            date_from = str(datetime.now().date() - timedelta(days=1))
+        if not date_to:
+            date_to = str(datetime.now().date())
+    chan = list(filter(lambda x: x.name == chan_name, chans))
+    view = "UUU sprawdzanko {0} {1} do {2} z {3}".format(chan_name, date_from, date_to, get_user_agent(request))
+    logger.info(view)
+    if len(chan) < 1:
+        abort(404)
+    db = DatabaseConnector()
+    dateformat = "%Y-%m-%d"
+    inst_from = datetime.strptime(date_from, dateformat)
+    inst_to = datetime.strptime(date_to, dateformat)
+    stats = db.calculate_average(chan_name, inst_from, inst_to)
+    periods = list(map(lambda x: str(x[0]), stats))
+    users = list(map(lambda x: x[1], stats))
+    if any(x is None for x in users):
+        users = False
+    posts = list(map(lambda x: x[2], stats))
+    return render_template('chart.html', chan_name=chan_name, periods=periods, posts=posts, users=users)
+
+
+@app.route("/")
+def hello():
+    view = "Wejście z " + get_user_agent(request)
     trk = random.choice(range(trk_count))
     logger.info(view)
-
-    # posts = posts_lasthour()
 
     return render_template('index.html', chans=chans, irc_servs=irc_servs, last_check=last_check, trk=trk)
 
