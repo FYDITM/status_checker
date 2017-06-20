@@ -25,7 +25,7 @@ sleep_minutes = 5
 trk_count = 6
 last_check = None
 last_posts_check = None
-log_level = logging.DEBUG
+log_level = logging.INFO
 logger = None
 db = None
 
@@ -177,13 +177,16 @@ def show_stats(chan_name):
     date_from = None
     date_to = None
     try:
-        date_from = request.form['date_from']
-        date_to = request.form['date_to']
-    except:
-        if not date_from:
-            date_from = str(datetime.now().date() - timedelta(days=1))
-        if not date_to:
-            date_to = str(datetime.now().date())
+        if 'date_from' in request.form and request.form['date_from']:
+            date_from = request.form['date_from']
+        else:
+            date_from = str(datetime.now().date())
+        if 'date_to' in request.form and request.form['date_to']:
+            date_to = request.form['date_to']
+        else:
+            date_to = str(datetime.now().date() + timedelta(days=1))
+    except Exception as ex:
+        logging.exeption(ex)
     chan = list(filter(lambda x: x.name == chan_name, chans))
     view = "UUU sprawdzanko {0} {1} do {2} z {3}".format(chan_name, date_from, date_to, get_user_agent(request))
     logger.info(view)
@@ -191,14 +194,21 @@ def show_stats(chan_name):
         abort(404)
     db = DatabaseConnector()
     dateformat = "%Y-%m-%d"
-    inst_from = datetime.strptime(date_from, dateformat)
-    inst_to = datetime.strptime(date_to, dateformat)
-    stats = db.calculate_average(chan_name, inst_from, inst_to)
+    try:
+        inst_from = datetime.strptime(date_from, dateformat)
+        inst_to = datetime.strptime(date_to, dateformat)
+    except:
+        return "Proszę sobie nie robić ziajtów"
+    try:
+        stats = db.calculate_average(chan_name, inst_from, inst_to)
+    except Exception as ex:
+        logger.exception(ex)
+        return "Coś poszło nie tak, prawdopodobnie nie ma danych z wybranego okresu"
     periods = list(map(lambda x: str(x[0]), stats))
-    users = list(map(lambda x: x[1], stats))
+    users = list(map(lambda x: round(x[1], 2), stats))
     if any(x is None for x in users):
         users = False
-    posts = list(map(lambda x: x[2], stats))
+    posts = list(map(lambda x: round(x[2], 2), stats))
     return render_template('chart.html', chan_name=chan_name, periods=periods, posts=posts, users=users)
 
 

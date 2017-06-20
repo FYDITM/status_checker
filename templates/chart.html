@@ -10,52 +10,54 @@
 </head>
 
 <body>
-<div>
-    <span>Zakres dat</span>
-    <form action="/stats/{{chan_name}}" method="POST">
-        <label for="date_from">od</label>
-        <input name="date_from" id="date_from" type="text">
-        <label for="date_to">do</label>
-        <input name="date_to" id="date_to" type="text">
-        <input type="submit" value="OK">
-    </form>
-</div>
-    <div >
+    <div>
+        <span>Zakres dat</span>
+        <form action="/stats/{{chan_name}}" method="POST">
+            <label for="date_from">od</label>
+            <input name="date_from" id="date_from" type="text">
+            <label for="date_to">do</label>
+            <input name="date_to" id="date_to" type="text">
+            <input type="submit" value="OK">
+        </form>
+    </div>
+    <div>
         <canvas id="canvas" style="display: block; width: 1000px; height: 500px;"></canvas>
     </div>
     <script>
     var pickerFrom = new Pikaday({
-        field:document.getElementById("date_from"), 
+        field: document.getElementById("date_from"),
         format: 'YYYY-MM-DD',
-        toString(date, format){
+        toString(date, format) {
             var day = date.getDate().toString();
-            if (day.length<2) {
-                day = "0"+day;
+            if (day.length < 2) {
+                day = "0" + day;
             }
             var month = (date.getMonth() + 1).toString();
-            if (month.length <2) {
-                month = "0"+month;
+            if (month.length < 2) {
+                month = "0" + month;
             }
             var year = date.getFullYear();
             return `${year}-${month}-${day}`;
-        }});
-   var pickerTo = new Pikaday({
-        field:document.getElementById("date_to"), 
+        }
+    });
+    var pickerTo = new Pikaday({
+        field: document.getElementById("date_to"),
         format: 'YYYY-MM-DD',
-        toString(date, format){
+        toString(date, format) {
             var day = date.getDate().toString();
-            if (day.length<2) {
-                day = "0"+day;
+            if (day.length < 2) {
+                day = "0" + day;
             }
             var month = (date.getMonth() + 1).toString();
-            if (month.length <2) {
-                month = "0"+month;
+            if (month.length < 2) {
+                month = "0" + month;
             }
             var year = date.getFullYear();
             return `${year}-${month}-${day}`;
-        }});
+        }
+    });
     var chartData = {
-        labels: {{periods|tojson}},
+        labels: {{periods | tojson}},
         datasets: [{
             label: "Posty na godzinę",
             borderColor: '#FF0000',
@@ -63,30 +65,32 @@
             fill: false,
             data: {{posts}},
             yAxisID: "y-axis-1",
-        }
-{%if users%}
-         ,{
+        } {%if users %}
+        , {
             label: "Użytkownicy online",
             borderColor: '#0000FF',
             backgroundColor: '#0000FF',
             fill: false,
             data: {{users}},
             yAxisID: "y-axis-2"
-        }
-        {%endif%}]
+        } {% endif %}
+        ]
     };
 
     window.onload = function() {
         var ctx = document.getElementById("canvas").getContext("2d");
-        window.myLine = Chart.Line(ctx, {
+        window.myBar = new Chart(ctx, {
+            type: 'bar',
             data: chartData,
             options: {
                 responsive: true,
-                hoverMode: 'index',
-                stacked: false,
                 title: {
                     display: true,
-                    text: 'Statystyki dla {{chan_name}}'
+                    text: "Statystyki dla {{chan_name}} od {{periods[0]}} do {{periods[(periods|length)-1]}}"
+                },
+                tooltips: {
+                    mode: 'index',
+                    intersect: true
                 },
                 scales: {
                     yAxes: [{
@@ -107,14 +111,14 @@
                             display: true,
                             labelString: 'Użytkownicy online'
                         },
-                        // grid line settings
                         gridLines: {
-                            drawOnChartArea: false, // only want the grid lines for one axis to show up
-                        },
+                            drawOnChartArea: false
+                        }
                     }],
                 }
             }
         });
+
     };
     </script>
 </body>

@@ -167,3 +167,4 @@ ENV/
 *.conf
 *.bat
 .idea/
+rowerek.db

@@ -2,11 +2,11 @@ import sqlite3
 from datetime import datetime, timedelta
 
 # schemat tabeli chan_stats:
-# id (autoinkrementowany klucz) | chan_name (text) | date (jako timestamp)
+# id (autoinkrementowany klucz) | chan_name (text) | date (jako str)
 # | ok (czy jeździ, 1 lub 0) | users (ile online) | posts_per_hour (real)
 
 # schemat tabeli posts:
-# id (autoinkrementowany klucz) | chan_name (text) | date (jako str) | board (text) | post_id (integer)
+# id (autoinkrementowany klucz) | chan_name (text) | date (jako timestamp) | board (text) | post_id (integer)
 dateformat = "%Y-%m-%d %H:%M:%S.%f"
 
 
@@ -68,11 +68,13 @@ class DatabaseConnector():
         gdzie period to poszczególne okresy (dni lub miesiące)
         """
         stats_list = self.parse_stats(self.get_stats(chan_name, date_from, date_to))
-        period = date_to - date_from
+        start_date = stats_list[0][0]
+        end_date = stats_list[len(stats_list) - 1][0]
+        period = end_date - start_date
         if period.days < 3:
             return list(map(lambda x: (x[0].strftime("%Y-%m-%d %H:%M"), x[2], x[3]), stats_list))
         result = []
-        day = date_from.date()
+        day = start_date.date()
         count = 0
         posts_total = 0
         users_total = 0
@@ -82,6 +84,8 @@ class DatabaseConnector():
                 posts_total += record[3]
                 count += 1
             else:
+                if count == 0:
+                    continue
                 result.append((day, users_total / count, posts_total / count))
                 day = record[0].date()
                 count = 1
@@ -89,7 +93,7 @@ class DatabaseConnector():
                 posts_total = record[3]
         if period.days >= 90:
             months_result = []
-            month = date_from.month
+            month = start_date.month
             count = 0
             posts_total = 0
             users_total = 0
