@@ -3,10 +3,19 @@
 ### Wymagania do uruchomienia:
  - Python 3.5+
  - Flask (`pip install Flask`)
+ - BeautifulSoup (`pip install bs4`)
+
+ Uruchomienienie lokalne:
+ `set FLASK_APP=status_check.py`
+ `flask run`
+
+ lub na gnu/linux
+ `FLASK_APP=status_check.py`
+ `flask run`
 
 ### TODO:
- - Wykresy userów online i postów na godzinę
- - Potencjalnie poprawki układu strony
+ - Zapobieganie nienaturalnie wysokim/niskim wartościom postów na godzinę (powstają prawdopodobnie przez usuwanie i/lub przenoszenie postów)
+ - Poprawki w sprawdzaniu statystyk martwych (np sis i heretyk)
 
 
 ### Licencja
