@@ -126,5 +126,11 @@ class ChanStats:
                 logger.error("Błąd przy sprawdzaniu id postów na {0}: {1}".format(url, str(ex)))
             if last_id and current_id:
                 posts_sum += (current_id - last_id)
+                if posts_sum < 0:
+                    if self.posts_per_hour > 0:
+                        posts_sum = self.posts_per_hour
+                    else:
+                        posts_sum = None
+
             db.insert_posts_record(self.name, datetime.now().timestamp(), board, current_id)
         self.posts_per_hour = posts_sum

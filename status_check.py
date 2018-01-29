@@ -8,6 +8,7 @@ import time
 import logging, logging.handlers
 import random
 import re
+import subprocess
 from chan_stats import ChanStats
 
 from dao import DatabaseConnector
@@ -33,11 +34,12 @@ db = None
 
 def initialize():
     init_logger()
-    logger.info("Inicjalizacja...")
+    logger.info("Inicjalizacja...") 
     logger.debug("Karol: " + str(karol_present))
     global chans
     tinyboard_selector = {"onclick": re.compile("citeReply*")}
     mitsuba_selector = {'class': 'quotePost'}
+    meguca_selector = {'class': 'quote'}
 
     chans = [
         ChanStats('kara', 'karachan.org')
@@ -50,7 +52,7 @@ def initialize():
             tinyboard_selector),
         ChanStats("wilno", "wilchan.org")
         .users_online_settings("https://wilchan.org/licznik.php")
-        .last_post_settings(('b','a','art','mf','vg','porn','lsd','h','o','pol','text','int'), 
+        .last_post_settings(('b', 'a', 'art', 'mf', 'vg', 'porn', 'lsd', 'h', 'o', 'pol', 'text', 'int'), 
             tinyboard_selector),
         ChanStats("heretyk", "heretyk.org")
         .last_post_settings(('b','t','meta'),
@@ -59,16 +61,21 @@ def initialize():
         ChanStats("kiwi", "kiwiszon.org/kusaba.php"),
         ChanStats("sis", "sischan.xyz")
         .users_online_settings("http://sischan.xyz/online.php", "TextNode('", "'), a.next")
-        .last_post_settings(('a','sis','s','meta'),
+        .last_post_settings(('a', 'sis', 's', 'meta'),
             mitsuba_selector),
         ChanStats("lenachan", "lenachan.eu.org")
-        .last_post_settings(('b','int'),
+        .last_post_settings(('b', 'int'),
             tinyboard_selector),
-        ChanStats("żywegówno", "zywegowno.club")
-        .last_post_settings(('a','b','kib','kuc','sra'),
-            {"class":"history quote"}),
+        ChanStats("gówno", "gowno.club")
+         # .users_online_settings("http://gowno.club/b", eStart="(", eStop=")", selector={"id": "page-title"})
+        .last_post_settings(('b',), meguca_selector),
+
+        ChanStats("korniszon", "kornichan.xyz"),
+
+        # .last_post_settings(("b","$","a","c","ku","r4","sp","thc","trv","vg","f","fa","lit","mu","dt","hp","kib","mil","pol","x","med","s","waifu","z","fz","meta"),
+        #     tinyboard_selector),
         # ChanStats("rybik", "rybik.ga"),
-        ChanStats("chanarchive", "chanarchive.pw")
+        # ChanStats("chanarchive", "chanarchive.pw")
     ]
     try:
         start_checking()
@@ -89,6 +96,17 @@ def init_logger():
     logger.addHandler(handler)
 
 
+def get_commit_hash():
+    h = ""
+    try:
+        h = subprocess.check_output("git rev-parse --short HEAD").decode()
+    except Exception as e:
+        logger.exception(e)
+    if not h:
+        h = "???????"
+    return h
+
+
 def report_status(address, status_code):
     msg = "Wygląda na to, że {0} spadł z rowerka. ".format(address)
     if status_code != -1:
@@ -104,22 +122,22 @@ def report_status(address, status_code):
             logger.error("Problem z wysyłaniem wiadomości przez Karola: " + str(msg))
 
 
-def check_irc_server(server):
-    global irc_servs
-    result = ""
-    address = "http://" + server + ".6irc.net"
-    try:
-        status_code = requests.get(address).status_code
-    except:
-        status_code = -1
-    if 200 <= status_code < 300:
-        irc_servs[server] = "jeździ"
-        return
-    else:
-        result += "spadł z rowerka"
-    if status_code != -1:
-        result += "(kod statusu: " + str(status_code) + ")"
-    irc_servs[server] = result
+# def check_irc_server(server):
+#     global irc_servs
+#     result = ""
+#     address = "http://" + server + ".6irc.net"
+#     try:
+#         status_code = requests.get(address).status_code
+#     except:
+#         status_code = -1
+#     if 200 <= status_code < 300:
+#         irc_servs[server] = "jeździ"
+#         return
+#     else:
+#         result += "spadł z rowerka"
+#     if status_code != -1:
+#         result += "(kod statusu: " + str(status_code) + ")"
+#     irc_servs[server] = result
 
 
 def check_continously():
@@ -133,9 +151,6 @@ def check_continously():
             logger.debug(chan.status)
             chan.check_users_online()
 
-        check_irc_server("polarity")
-        check_irc_server("sundance")
-        check_irc_server("narkotyki")
         last_check = datetime.now()
 
         if last_posts_check is None or datetime.now() - last_posts_check >= timedelta(hours=1):
@@ -218,7 +233,7 @@ def hello():
     trk = random.choice(range(trk_count))
     logger.info(view)
 
-    return render_template('index.html', chans=chans, irc_servs=irc_servs, last_check=last_check, trk=trk)
+    return render_template('index.html', chans=chans, last_check=last_check, trk=trk, commit_hash=get_commit_hash())
 
 
 initialize()

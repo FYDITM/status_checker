@@ -1,10 +1,25 @@
 body {
     margin: auto;
-    max-width: 50%;
+    max-width: 60%;
     line-height: 1.6;
-    font-size: 18px;
+    font-size: 14px;
     color: #444;
     padding: 0 10px min-height: 100%;
+    font-family: Verdana
+}
+
+@media screen and (max-width: 480px) {
+    .background-vid {
+        display: none;
+    }
+    body{
+        max-width: 100%;
+        font-size:12;
+    }
+    .content { width:100%; }
+    .content div {
+        width: 100%;
+    }
 }
 
 div {
@@ -24,11 +39,7 @@ div {
     color: red;
 }
 
-ul {
-    list-style: none;
-}
-
-li img {
+.bike {
     width: 18px;
     height: 18px;
 }
@@ -60,10 +71,18 @@ footer div {
     height: 100%;
 }
 
+h4 {
+    text-align: center;
+}
+
+td {
+    padding-right:10px;
+}
+
 .content {
     padding: 10px;
     margin: 10px auto;
-    width:80%;
+    width:90%;
     background: rgba(225, 225, 225, .9);
 }
 
@@ -73,7 +92,3 @@ footer div {
     width:80%;
 }
 
-#irce {
-    font-size: 14px;
-    margin-top: 30px;
-}

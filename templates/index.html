@@ -15,32 +15,54 @@
     <div class="content">
     <div>
         <h4>Aktualny stan czanów:</h4>
-        <ul>
+        <table>
+            <ul>
             {%for chan in chans %} {% if chan.OK %}
-            <li class="ok">
-                <img alt="✓" src="{{url_for('static', filename='jezdzi.svg')}}"> <a href="/stats/{{chan.name}}">{{chan.name}}: {{chan.status}} {% if chan.users_online %} | online: {{chan.users_online}} {% endif %} {% if chan.posts_per_hour is not none %} | posty na godzinę: {{chan.posts_per_hour}} {% endif %}</a>
-            </li>
+            
+            <tr class="ok">
+                <td>
+                    <img class="bike" alt="✓" src="{{url_for('static', filename='jezdzi.svg')}}"> <a href="/stats/{{chan.name}}">{{chan.name}}</a>            
+                </td>
+                <td>
+                    {{chan.status}}
+                </td>
+                <td>
+                   {% if chan.users_online %} online: {{chan.users_online}} {% endif %}
+                </td>
+                <td>
+                    {% if chan.posts_per_hour is not none %} posty na godzinę: {{chan.posts_per_hour}} {% endif %}
+                </td>
+            </tr>
             {% else %}
-            <li class="no"><img alt="❌" src="{{url_for('static', filename='spadlo.svg')}}"> {{chan.name}}: {{chan.status}}</li>
+            <tr class="no">
+                <td>
+                    <img class="bike" alt="❌" src="{{url_for('static', filename='spadlo.svg')}}"> {{chan.name}}
+                </td>
+                <td>
+                    {{chan.status}}
+                </td>
+                <td></td><td></td>                
+            </tr>
             {% endif %} {% endfor %}
         </ul>
+    </table>
     </div>
-    <div id="irce">
-        <h5> Aktualny stan serwerów irc:</h5>
-        <ul>
-            {% for serv, state in irc_servs.items() %} {% if state == "jeździ" %}
-            <li class="ok"><img alt="✓" src="{{url_for('static', filename='jezdzi.svg')}}"> {{serv}}: {{state}}</li>
-            {% else %}
-            <li class="no"><img alt="❌" src="{{url_for('static', filename='spadlo.svg')}}"> {{serv}}: {{state}}</li>
-            {% endif %} {% endfor %}
-        </ul>
-    </div>
+   
     <footer>
         {% if last_check %}
         <div>Sprawdzono: {{last_check.strftime("%Y-%m-%d %X")}}</div> {% endif %}
-        <div>Dej na serwer i rozwój: 14jHfsFkKc8VSt5wufisiir3yT9mXiBsAi</div>
+        <div>Kontakt: tomekterka@loves.dicksinhisan.us</div>
+        <div>{{commit_hash}}</div>
     </footer>
     </div>
 </body>
 
+<script>
+    document.onload = function(){
+        if (window.innerWidth <480) {
+            document.getElementsByClassName("background-vid")[0].removeAttribute("autoplay")
+        }
+    }
+</script>
 </html>
+
