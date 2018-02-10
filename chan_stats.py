@@ -79,7 +79,6 @@ class ChanStats:
             content = requests.get(self.users_online_url, verify=False).content.decode()
 
             if self.online_selector:
-                # w sumie na żadnym czanie w tej chwili w ten sposób tak się nie da nic złapać
                 site = BeautifulSoup(content, "html.parser")
                 content = site.find_all(attrs=self.online_selector)[0]
 

@@ -11,11 +11,11 @@ import re
 import subprocess
 from chan_stats import ChanStats
 
-from dao import DatabaseConnector
+from dao import DatabaseConnector, dateformat
 
 
-import karol_api as karol
-karol_present = True
+# import karol_api as karol
+karol_present = False
 
 app = Flask(__name__)
 
@@ -26,7 +26,7 @@ sleep_minutes = 5
 trk_count = 6
 last_check = None
 last_posts_check = None
-log_level = logging.INFO
+log_level = logging.DEBUG
 logger = None
 db = None
 
@@ -48,7 +48,7 @@ def initialize():
                             mitsuba_selector),
         ChanStats('vi', 'pl.vichan.net')
         .users_online_settings("https://pl.vichan.net/online.php", "innerHTML+='", "| Aktywne")
-        .last_post_settings(('b','cp','id','int','r+oc','slav','veto','waifu','wiz','btc','c','c++','fso','h','kib','ku','lsd','psl','sci','trv','vg','a','ac','az','fr','hk','lit','mu','tv','vp','x','med','pr','pro','psy','sex','soc','sr','swag','trap','chan','meta','mit'),
+        .last_post_settings(('b','cp','id','int','r+oc','veto','waifu','btc','c','c++','fso','h','ku','lsd','psl','sci','trv','vg','a','hk','lit','mu','tv','x','med','pr','pro','psy','sex','soc','sr','swag','chan','meta'),
             tinyboard_selector),
         ChanStats("wilno", "wilchan.org")
         .users_online_settings("https://wilchan.org/licznik.php")
@@ -60,17 +60,23 @@ def initialize():
         # do sprawdzenia online na kiwi potrzeba ustawionego ciasteczka z zaakceptowanym regulaminem i phpSessionId :/
         ChanStats("kiwi", "kiwiszon.org/kusaba.php"),
         ChanStats("sis", "sischan.xyz")
-        .users_online_settings("http://sischan.xyz/online.php", "TextNode('", "'), a.next")
-        .last_post_settings(('a', 'sis', 's', 'meta'),
+            .users_online_settings("https://sischan.xyz/online.php", "TextNode('", "'), a.next")
+            .last_post_settings(('a', 'sis', 's', 'meta'),
             mitsuba_selector),
         ChanStats("lenachan", "lenachan.eu.org")
         .last_post_settings(('b', 'int'),
             tinyboard_selector),
         ChanStats("gówno", "gowno.club")
-         # .users_online_settings("http://gowno.club/b", eStart="(", eStop=")", selector={"id": "page-title"})
+        .users_online_settings("https://gowno.club/json/ip-count")
         .last_post_settings(('b',), meguca_selector),
+        ChanStats("auchan", "http://auchan.pw/b/")
+        .users_online_settings("http://blogutils.net/olct/online.php?site=auchan.pw/", eStart="</iframe>\');\n$$.write(\"", eStop="\");\n\n$_"),
+        # .last_post_settings(('b'),  )
 
-        ChanStats("korniszon", "kornichan.xyz"),
+
+        ChanStats("korniszon", "kornichan.xyz")
+        .users_online_settings("https://kornichan.xyz/online.php", "innerHTML+='", "';var")
+        .last_post_settings(('b', '$', 'a', 'c', 'ku', 'r4', 'sp', 'thc', 'trv', 'vg', 'f', 'fa', 'lit', 'mu', 'dt', 'hp', 'kib', 'mil', 'pol', 'x', 'med', 's', 'waifu', 'z', 'fz', 'meta'), tinyboard_selector),
 
         # .last_post_settings(("b","$","a","c","ku","r4","sp","thc","trv","vg","f","fa","lit","mu","dt","hp","kib","mil","pol","x","med","s","waifu","z","fz","meta"),
         #     tinyboard_selector),
@@ -195,11 +201,11 @@ def show_stats(chan_name):
         if 'date_from' in request.form and request.form['date_from']:
             date_from = request.form['date_from']
         else:
-            date_from = str(datetime.now().date())
+            date_from = str(datetime.now() - timedelta(hours=12))
         if 'date_to' in request.form and request.form['date_to']:
             date_to = request.form['date_to']
         else:
-            date_to = str(datetime.now().date() + timedelta(days=1))
+            date_to = str(datetime.now() + timedelta(hours=1))
     except Exception as ex:
         logging.exeption(ex)
     chan = list(filter(lambda x: x.name == chan_name, chans))
@@ -207,8 +213,10 @@ def show_stats(chan_name):
     logger.info(view)
     if len(chan) < 1:
         abort(404)
+    if chan[0].boards is None:
+        return "Brak szczegółowych statystyk na temat '{0}'".format(chan_name)
     db = DatabaseConnector()
-    dateformat = "%Y-%m-%d"
+    # dateformat = "%Y-%m-%d"
     try:
         inst_from = datetime.strptime(date_from, dateformat)
         inst_to = datetime.strptime(date_to, dateformat)
@@ -220,9 +228,9 @@ def show_stats(chan_name):
         logger.exception(ex)
         return "Coś poszło nie tak, prawdopodobnie nie ma danych z wybranego okresu"
     periods = list(map(lambda x: str(x[0]), stats))
-    users = list(map(lambda x: round(x[1], 2), stats))
-    if any(x is None for x in users):
-        users = False
+    users = False
+    if all(x[1] is not None for x in stats):
+            users = list(map(lambda x: round(x[1], 2), stats))
     posts = list(map(lambda x: round(x[2], 2), stats))
     return render_template('chart.html', chan_name=chan_name, periods=periods, posts=posts, users=users)
 

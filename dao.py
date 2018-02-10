@@ -1,4 +1,5 @@
 import sqlite3
+import logging
 from datetime import datetime, timedelta
 
 # schemat tabeli chan_stats:
@@ -8,6 +9,7 @@ from datetime import datetime, timedelta
 # schemat tabeli posts:
 # id (autoinkrementowany klucz) | chan_name (text) | date (jako timestamp) | board (text) | post_id (integer)
 dateformat = "%Y-%m-%d %H:%M:%S.%f"
+logger = logging.getLogger("rowerek")
 
 
 class DatabaseConnector():
