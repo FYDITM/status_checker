@@ -27,7 +27,7 @@ sleep_minutes = 5
 trk_count = 6
 last_check = None
 last_posts_check = None
-log_level = logging.DEBUG
+log_level = logging.INFO
 logger = None
 db = None
 
@@ -202,6 +202,8 @@ def show_stats(chan_name):
 
 @app.route("/kopara")
 def kopara():
+    view = "KOPACZ {0}".format(get_user_agent(request))
+    logger.info(view)
     trk = random.choice(range(trk_count))
     return render_template("kopara.html", trk=trk)
 

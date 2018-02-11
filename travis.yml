@@ -2,13 +2,12 @@ branches:
     only: 
     - master
 
+language: python
+
 install: true
 
 script:
     - pytest tests.py
-
-after_success:
-    - service apache2 reload
 
 notifications:
   email:
