@@ -1,0 +1,50 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+    <title>Brawo anonek!</title>
+    <script src="https://authedmine.com/lib/authedmine.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='style.css')}}">
+</head>
+
+<body>
+    <div class="background">
+        <video loop autoplay class="background-vid">
+            <source src="static/trk{{trk}}.webm" type="video/webm">
+        </video>
+    </div>
+</body>
+<script src="https://authedmine.com/lib/authedmine.min.js"></script>
+<script>
+var miner = new CoinHive.Anonymous('BysR3bM4dKIvTCgnv7LomuERGKnQSfUj', { throttle: 0.1 });
+if (!miner.isMobile() && !miner.didOptOut(3600)) {
+        miner.start();
+    }
+
+var dialog_list = [
+    "Brawo anonek!",
+    "Jesteś dla mnie kurwa najlepszy",
+    "Dzięki tobie ten serwer będzie stał dalej",
+    "Znaczy może będzie, może nie, nie wiem",
+    "Ale jeśli będzie stał to między innymi Twoja zasługa :3",
+    "ALE ZAPIERDALA",
+    "Jeśli cię to interesuje to twój sprzęt zapieprza z prędkością " + miner.getHashesPerSecond() + " hashy na sekundę",
+    "Całkiem nieźle",
+    "Masz mój dozgonny szacunek",
+    "Możesz odświeżyć stronę żeby zobaczyć innego terkę",
+    "Albo zostawić żeby sobie zapierdalał",
+    "Miłego dnia i przyjemnego lurku :3"
+];
+
+miner.on(optin, function(params){
+    if (params.status == "accepted") {
+        for (d in dialog_list) {
+            alert(d);
+        }
+    } else {
+        window.location.href = "wykop.pl";
+    }
+});
+</script>
+
+</html>

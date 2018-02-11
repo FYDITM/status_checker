@@ -5,11 +5,13 @@ from collections import OrderedDict
 import requests
 import threading
 import time
-import logging, logging.handlers
+import logging
+import logging.handlers
 import random
 import re
 import subprocess
 from chan_stats import ChanStats
+from chans_settings import chans
 
 from dao import DatabaseConnector, dateformat
 
@@ -19,7 +21,6 @@ karol_present = False
 
 app = Flask(__name__)
 
-chans = []
 irc_servs = OrderedDict()
 running = False
 sleep_minutes = 5
@@ -31,62 +32,21 @@ logger = None
 db = None
 
 
-
 def initialize():
     init_logger()
-    logger.info("Inicjalizacja...") 
+    logger.info("Inicjalizacja...")
     logger.debug("Karol: " + str(karol_present))
-    global chans
-    tinyboard_selector = {"onclick": re.compile("citeReply*")}
-    mitsuba_selector = {'class': 'quotePost'}
-    meguca_selector = {'class': 'quote'}
-
-    chans = [
-        ChanStats('kara', 'karachan.org')
-        .users_online_settings("http://karachan.org/online.php", "createTextNode('", "'), a.nextSibling")
-        .last_post_settings(('id','4','b','z','$','c','co','a','edu','f','fa','h','wat','ku','l','med','mil','mu','oc','p','sp','tech','thc','trv','v8','vg','x','og','r','kara','g','s'), 
-                            mitsuba_selector),
-        ChanStats('vi', 'pl.vichan.net')
-        .users_online_settings("https://pl.vichan.net/online.php", "innerHTML+='", "| Aktywne")
-        .last_post_settings(('b','cp','id','int','r+oc','veto','waifu','btc','c','c++','fso','h','ku','lsd','psl','sci','trv','vg','a','hk','lit','mu','tv','x','med','pr','pro','psy','sex','soc','sr','swag','chan','meta'),
-            tinyboard_selector),
-        ChanStats("wilno", "wilchan.org")
-        .users_online_settings("https://wilchan.org/licznik.php")
-        .last_post_settings(('b', 'a', 'art', 'mf', 'vg', 'porn', 'lsd', 'h', 'o', 'pol', 'text', 'int'), 
-            tinyboard_selector),
-        ChanStats("heretyk", "heretyk.org")
-        .last_post_settings(('b','t','meta'),
-            {"onclick":re.compile("return insert*")}),
-        # do sprawdzenia online na kiwi potrzeba ustawionego ciasteczka z zaakceptowanym regulaminem i phpSessionId :/
-        ChanStats("kiwi", "kiwiszon.org/kusaba.php"),
-        ChanStats("sis", "sischan.xyz")
-            .users_online_settings("https://sischan.xyz/online.php", "TextNode('", "'), a.next")
-            .last_post_settings(('a', 'sis', 's', 'meta'),
-            mitsuba_selector),
-        ChanStats("lenachan", "lenachan.eu.org")
-        .last_post_settings(('b', 'int'),
-            tinyboard_selector),
-        ChanStats("gówno", "gowno.club")
-        .users_online_settings("https://gowno.club/json/ip-count")
-        .last_post_settings(('b',), meguca_selector),
-        ChanStats("auchan", "http://auchan.pw/b/")
-        .users_online_settings("http://blogutils.net/olct/online.php?site=auchan.pw/", eStart="</iframe>\');\n$$.write(\"", eStop="\");\n\n$_"),
-        # .last_post_settings(('b'),  )
-
-
-        ChanStats("korniszon", "kornichan.xyz")
-        .users_online_settings("https://kornichan.xyz/online.php", "innerHTML+='", "';var")
-        .last_post_settings(('b', '$', 'a', 'c', 'ku', 'r4', 'sp', 'thc', 'trv', 'vg', 'f', 'fa', 'lit', 'mu', 'dt', 'hp', 'kib', 'mil', 'pol', 'x', 'med', 's', 'waifu', 'z', 'fz', 'meta'), tinyboard_selector),
-
-        # .last_post_settings(("b","$","a","c","ku","r4","sp","thc","trv","vg","f","fa","lit","mu","dt","hp","kib","mil","pol","x","med","s","waifu","z","fz","meta"),
-        #     tinyboard_selector),
-        # ChanStats("rybik", "rybik.ga"),
-        # ChanStats("chanarchive", "chanarchive.pw")
-    ]
     try:
         start_checking()
     except Exception as e:
         logger.error("Problem przy startowaniu pętli sprawdzającej: " + e)
+
+
+def chansort(chan):
+    if chan.users_online == "n/a":
+        return -1
+    else:
+        return int(chan.users_online)
 
 
 def init_logger():
@@ -105,7 +65,7 @@ def init_logger():
 def get_commit_hash():
     h = ""
     try:
-        h = subprocess.check_output("git rev-parse --short HEAD").decode()
+        h = subprocess.check_output(["git", "rev-parse", "--short", "HEAD"]).decode().strip()
     except Exception as e:
         logger.exception(e)
     if not h:
@@ -181,6 +141,11 @@ def start_checking():
     checking_fred.start()
 
 
+def stop_checking():
+    global running
+    running = False
+
+
 def get_user_agent(request):
     ip = request.environ["REMOTE_ADDR"]
     if "X-Forwarded-For" in request.environ:
@@ -198,11 +163,11 @@ def show_stats(chan_name):
     date_from = None
     date_to = None
     try:
-        if 'date_from' in request.form and request.form['date_from']:
+        if request is not None and 'date_from' in request.form and request.form['date_from']:
             date_from = request.form['date_from']
         else:
             date_from = str(datetime.now() - timedelta(hours=12))
-        if 'date_to' in request.form and request.form['date_to']:
+        if request is not None and 'date_to' in request.form and request.form['date_to']:
             date_to = request.form['date_to']
         else:
             date_to = str(datetime.now() + timedelta(hours=1))
@@ -230,9 +195,15 @@ def show_stats(chan_name):
     periods = list(map(lambda x: str(x[0]), stats))
     users = False
     if all(x[1] is not None for x in stats):
-            users = list(map(lambda x: round(x[1], 2), stats))
+        users = list(map(lambda x: round(x[1], 2), stats))
     posts = list(map(lambda x: round(x[2], 2), stats))
     return render_template('chart.html', chan_name=chan_name, periods=periods, posts=posts, users=users)
+
+
+@app.route("/kopara")
+def kopara():
+    trk = random.choice(range(trk_count))
+    return render_template("kopara.html", trk=trk)
 
 
 @app.route("/")
@@ -240,8 +211,8 @@ def hello():
     view = "Wejście z " + get_user_agent(request)
     trk = random.choice(range(trk_count))
     logger.info(view)
-
-    return render_template('index.html', chans=chans, last_check=last_check, trk=trk, commit_hash=get_commit_hash())
+    chanlist = sorted(chans, key=chansort, reverse=True)
+    return render_template('index.html', chans=chanlist, last_check=last_check, trk=trk, commit_hash=get_commit_hash())
 
 
 initialize()

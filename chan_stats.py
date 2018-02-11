@@ -16,7 +16,6 @@ class ChanStats:
         self.users_online = "n/a"
         self.status = "n/a"
         self.status_code = "n/a"
-        self.users_online = None
         self.users_online_url = None
         self.boards = None
         self.posts_per_hour = None
@@ -80,7 +79,7 @@ class ChanStats:
 
             if self.online_selector:
                 site = BeautifulSoup(content, "html.parser")
-                content = site.find_all(attrs=self.online_selector)[0]
+                content = site.select_one(self.online_selector)
 
             if self.eStart:
                 self.users_online = content[content.index(self.eStart) + len(self.eStart):content.index(self.eStop)].strip()
@@ -93,7 +92,7 @@ class ChanStats:
     def get_current_post(self, url):
         try:
             site = BeautifulSoup(requests.get(url).content.decode(), 'html.parser')
-            nodes = site.find_all(attrs=self.post_selector)
+            nodes = site.select(self.post_selector)
         except Exception:
             logger.exception("Błąd przy sprawdzaniu aktualnego posta na " + url)
         postIds = []
