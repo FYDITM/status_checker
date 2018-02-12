@@ -107,6 +107,8 @@ class ChanStats:
 
     def get_current_post(self, url):
         response = self.get_response(url, "aktualnego posta")
+        if not response:
+            return None
         try:
             site = BeautifulSoup(response.content.decode(), 'html.parser')
             nodes = site.select(self.post_selector)
