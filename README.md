@@ -13,6 +13,7 @@
  `flask run`
 
 ### TODO:
+ - Dopisać sensowne testy
  - Poprawki w sprawdzaniu statystyk martwych (np kiwi i heretyk)
  - Rozbicie na wątki
  - Lepsze prezentowanie statystyk (niech ktoś)

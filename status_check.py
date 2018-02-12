@@ -199,7 +199,7 @@ def show_stats(chan_name):
         return "Coś poszło nie tak, prawdopodobnie nie ma danych z wybranego okresu"
     periods = list(map(lambda x: str(x[0]), stats))
     users = False
-    if all(x[1] is not None and type(x[1]) == float for x in stats):
+    if all(x[1] is not None and type(x[1]) != str for x in stats):
         users = list(map(lambda x: round(x[1], 2), stats))
     posts = list(map(lambda x: round(x[2], 2), stats))
     return render_template('chart.html', chan_name=chan_name, periods=periods, posts=posts, users=users)
