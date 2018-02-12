@@ -5,7 +5,8 @@ branches:
 language: python
     - "3.6"
 
-install: true
+install: 
+    - pip intall -r requirements.txt
 
 script:
     - pytest tests.py
