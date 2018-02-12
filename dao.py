@@ -9,6 +9,7 @@ from datetime import datetime, timedelta
 # schemat tabeli posts:
 # id (autoinkrementowany klucz) | chan_name (text) | date (jako timestamp) | board (text) | post_id (integer)
 dateformat = "%Y-%m-%d %H:%M:%S.%f"
+short_dateformat = "%Y-%m-%d"
 logger = logging.getLogger("rowerek")
 
 
@@ -48,7 +49,7 @@ class DatabaseConnector():
         self.cur.execute("SELECT post_id FROM posts WHERE chan_name=? AND board=? AND date BETWEEN ? AND ?",
                          (chan_name, board, lower_timestamp, greater_timestamp))
         postId = self.cur.fetchone()  # nawet jeśli więcej niż jeden to i tak wystarczająco blisko
-        if postId:
+        if postId and len(postId) > 0:
             return postId[0]
         else:
             return None
@@ -82,8 +83,10 @@ class DatabaseConnector():
         users_total = 0
         for record in stats_list:
             if record[0].date() == day:
-                users_total += record[2]
-                posts_total += record[3]
+                if record[2]:
+                    users_total += record[2]
+                if record[3]:
+                    posts_total += record[3]
                 count += 1
             else:
                 if count == 0:

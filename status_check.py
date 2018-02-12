@@ -1,19 +1,16 @@
 # -*- coding: utf-8 -*-
-from flask import Flask, request, render_template, abort, json
+from flask import Flask, request, render_template, abort
 from datetime import datetime, timedelta
 from collections import OrderedDict
-import requests
 import threading
 import time
 import logging
 import logging.handlers
 import random
-import re
 import subprocess
-from chan_stats import ChanStats
 from chans_settings import chans
 
-from dao import DatabaseConnector, dateformat
+from dao import DatabaseConnector, dateformat, short_dateformat
 
 
 # import karol_api as karol
@@ -43,6 +40,8 @@ def initialize():
 
 
 def chansort(chan):
+    if not chan.OK:
+        return -2
     if chan.users_online == "n/a":
         return -1
     else:
@@ -77,7 +76,6 @@ def report_status(address, status_code):
     msg = "Wygląda na to, że {0} spadł z rowerka. ".format(address)
     if status_code != -1:
         msg += "Kod statusu {0}".format(status_code)
-    logger.info(msg)
     if karol_present:
         logger.debug("Wysyłam wiadomość przez Karola...")
         if "vichan" in address:
@@ -115,7 +113,8 @@ def check_continously():
             logger.debug("Sprawdzenia " + chan.address)
             chan.parse_status()
             logger.debug(chan.status)
-            chan.check_users_online()
+            if chan.OK:
+                chan.check_users_online()
 
         last_check = datetime.now()
 
@@ -181,11 +180,17 @@ def show_stats(chan_name):
     if chan[0].boards is None:
         return "Brak szczegółowych statystyk na temat '{0}'".format(chan_name)
     db = DatabaseConnector()
+
+    if len(date_from) > 10:
+        frmt = dateformat
+    else:
+        frmt = short_dateformat
     # dateformat = "%Y-%m-%d"
     try:
-        inst_from = datetime.strptime(date_from, dateformat)
-        inst_to = datetime.strptime(date_to, dateformat)
-    except:
+        inst_from = datetime.strptime(date_from, frmt)
+        inst_to = datetime.strptime(date_to, frmt)
+    except Exception as err:
+        logger.exception(err)
         return "Proszę sobie nie robić ziajtów"
     try:
         stats = db.calculate_average(chan_name, inst_from, inst_to)
@@ -194,7 +199,7 @@ def show_stats(chan_name):
         return "Coś poszło nie tak, prawdopodobnie nie ma danych z wybranego okresu"
     periods = list(map(lambda x: str(x[0]), stats))
     users = False
-    if all(x[1] is not None for x in stats):
+    if all(x[1] is not None and type(x[1]) == float for x in stats):
         users = list(map(lambda x: round(x[1], 2), stats))
     posts = list(map(lambda x: round(x[2], 2), stats))
     return render_template('chart.html', chan_name=chan_name, periods=periods, posts=posts, users=users)

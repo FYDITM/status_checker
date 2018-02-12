@@ -11,6 +11,8 @@
 
 <body>
     <div>
+        <div><a href="/">Powrót</a></div>
+        <div>
         <span>Zakres dat</span>
         <form action="/stats/{{chan_name}}" method="POST">
             <label for="date_from">od</label>
@@ -19,6 +21,7 @@
             <input name="date_to" id="date_to" type="text">
             <input type="submit" value="OK">
         </form>
+    </div>
     </div>
     <div>
         <canvas id="canvas" style="display: block; width: 1000px; height: 500px;"></canvas>

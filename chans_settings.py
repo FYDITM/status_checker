@@ -26,7 +26,7 @@ chans = [
     # do sprawdzenia online na kiwi potrzeba ustawionego ciasteczka z zaakceptowanym regulaminem i phpSessionId :/
     ChanStats("kiwi", "kiwiszon.org/kusaba.php"),
 
-    ChanStats("sis", "sischan.xyz")
+    ChanStats("sis", "sischan.xyz/sis/")
     .users_online_settings("https://sischan.xyz/online.php", "TextNode('", "'), a.next")
     .last_post_settings(('a', 'sis', 's', 'meta'),
                         mitsuba_selector),

@@ -5,6 +5,8 @@ from bs4 import BeautifulSoup
 
 
 logger = logging.getLogger("rowerek")
+timeout = 20
+not_available = "n/a"
 
 
 class ChanStats:
@@ -13,9 +15,9 @@ class ChanStats:
         self.name = name
         self.address = address
         self.OK = False
-        self.users_online = "n/a"
-        self.status = "n/a"
-        self.status_code = "n/a"
+        self.users_online = not_available
+        self.status = not_available
+        self.status_code = not_available
         self.users_online_url = None
         self.boards = None
         self.posts_per_hour = None
@@ -49,12 +51,23 @@ class ChanStats:
         self.cookie = cookie
         return self
 
-    def check_status(self):
+    def get_response(self, url, operation):
         try:
-            request = requests.get(self.address, verify=False, timeout=20)
-        except:
+            response = requests.get(url, verify=False, timeout=timeout)
+            return response
+        except requests.exceptions.ConnectionError:
+            logger.debug("ConnectionError przy sprawdzaniu {0} na {1}".format(operation, self.name))
+        except requests.exceptions.ConnectTimeout:
+            logger.debug("ConnectTimeout przy sprawdzaniu {0} na {1}".format(operation, self.name))
+        except Exception as ex:
+            logger.exception("Błąd przy sprawdzaniu {0} na {1}, url: {2}".format(operation, self.name, url))
+
+    def check_status(self):
+        response = self.get_response(self.address, "statusu")
+        if response and response.status_code:
+            return response.status_code
+        else:
             return -1
-        return request.status_code
 
     def parse_status(self):
         result = ""
@@ -74,9 +87,12 @@ class ChanStats:
         if not self.users_online_url:
             return
 
+        response = self.get_response(self.users_online_url, "userów online")
+        if not response:
+            self.users_online = not_available
+            return
+        content = response.content.decode()
         try:
-            content = requests.get(self.users_online_url, verify=False).content.decode()
-
             if self.online_selector:
                 site = BeautifulSoup(content, "html.parser")
                 content = site.select_one(self.online_selector)
@@ -87,15 +103,18 @@ class ChanStats:
             else:
                 self.users_online = content
         except Exception as ex:
-            logger.exception("Błąd przy sprawdzaniu liczby online na " + self.users_online_url)
+            logger.exception("Błąd przy parsowaniu liczby online na " + self.users_online_url)
 
     def get_current_post(self, url):
+        response = self.get_response(url, "aktualnego posta")
         try:
-            site = BeautifulSoup(requests.get(url).content.decode(), 'html.parser')
+            site = BeautifulSoup(response.content.decode(), 'html.parser')
             nodes = site.select(self.post_selector)
         except Exception:
-            logger.exception("Błąd przy sprawdzaniu aktualnego posta na " + url)
+            logger.exception("Błąd przy parsowaniu aktualnego posta na " + url)
         postIds = []
+        if nodes is None or len(nodes) < 1:
+            return None
         for node in nodes:
             postId = node.text
             if postId:
@@ -126,9 +145,10 @@ class ChanStats:
                 posts_sum += (current_id - last_id)
                 if posts_sum < 0:
                     if self.posts_per_hour > 0:
+                        # jeśli teraz wychodzi mniej niż zero, to prawdopodobnie były usunięte jakieś posty, więc na razie dajemy ostatnią wartość
                         posts_sum = self.posts_per_hour
                     else:
-                        posts_sum = None
+                        posts_sum = 0
 
             db.insert_posts_record(self.name, datetime.now().timestamp(), board, current_id)
         self.posts_per_hour = posts_sum
