@@ -157,10 +157,20 @@ def get_user_agent(request):
     return view
 
 
-@app.route("/stats/<chan_name>", methods=['GET', 'POST'])
-def show_stats(chan_name):
-    date_from = None
-    date_to = None
+def round_numbers(numbers, idx):
+    result = []
+    for n in numbers:
+        if n[idx] is not None and type(n[idx]) != str:
+            result.append(round(n[idx], 2))
+        else:
+            result.append(0)
+    return result
+
+
+def get_dates(request):
+    """
+    Zwraca krotkę (date_from, date_to) lub None
+    """
     try:
         if request is not None and 'date_from' in request.form and request.form['date_from']:
             date_from = request.form['date_from']
@@ -170,17 +180,16 @@ def show_stats(chan_name):
             date_to = request.form['date_to']
         else:
             date_to = str(datetime.now() + timedelta(hours=1))
+        return (date_from, date_to)
     except Exception as ex:
-        logging.exeption(ex)
-    chan = list(filter(lambda x: x.name == chan_name, chans))
-    view = "UUU sprawdzanko {0} {1} do {2} z {3}".format(chan_name, date_from, date_to, get_user_agent(request))
-    logger.info(view)
-    if len(chan) < 1:
-        abort(404)
-    if chan[0].boards is None:
-        return "Brak szczegółowych statystyk na temat '{0}'".format(chan_name)
-    db = DatabaseConnector()
+        logging.exeption("Błąd przy parsowaniu daty do statystyk", ex)
+        return None
 
+
+def parse_dates(date_from, date_to):
+    """
+    Zwraca krotkę (date_from, date_to) lub None
+    """
     if len(date_from) > 10:
         frmt = dateformat
     else:
@@ -189,19 +198,38 @@ def show_stats(chan_name):
     try:
         inst_from = datetime.strptime(date_from, frmt)
         inst_to = datetime.strptime(date_to, frmt)
+        return (inst_from, inst_to)
     except Exception as err:
         logger.exception(err)
+        return None
+
+
+@app.route("/stats/<chan_name>", methods=['GET', 'POST'])
+def show_stats(chan_name):
+    dates = get_dates(request)
+    if dates is None:
+        return "Coś zjebałeś z tymi datami stary"
+    chan = list(filter(lambda x: x.name == chan_name, chans))
+    view = "UUU sprawdzanko {0} {1} do {2} z {3}".format(chan_name, dates[0], dates[1], get_user_agent(request))
+    logger.info(view)
+    if len(chan) < 1:
+        abort(404)
+    if chan[0].boards is None and chan[0].users_online_url is None:
+        return "Brak szczegółowych statystyk na temat '{0}'".format(chan_name)
+    parsed_dates = parse_dates(*dates)
+    if parsed_dates is None:
         return "Proszę sobie nie robić ziajtów"
+    db = DatabaseConnector()
+    date_from, date_to = parsed_dates
     try:
-        stats = db.calculate_average(chan_name, inst_from, inst_to)
+        stats = db.calculate_average(chan_name, date_from, date_to)
     except Exception as ex:
         logger.exception(ex)
         return "Coś poszło nie tak, prawdopodobnie nie ma danych z wybranego okresu"
     periods = list(map(lambda x: str(x[0]), stats))
     users = False
-    if all(x[1] is not None and type(x[1]) != str for x in stats):
-        users = list(map(lambda x: round(x[1], 2), stats))
-    posts = list(map(lambda x: round(x[2], 2), stats))
+    users = round_numbers(stats, 1)
+    posts = round_numbers(stats, 2)
     return render_template('chart.html', chan_name=chan_name, periods=periods, posts=posts, users=users)
 
 
