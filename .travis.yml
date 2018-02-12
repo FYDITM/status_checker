@@ -3,6 +3,7 @@ branches:
     - master
 
 language: python
+    - "3.6"
 
 install: true
 
