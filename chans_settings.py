@@ -26,7 +26,7 @@ chans = [
     # do sprawdzenia online na kiwi potrzeba ustawionego ciasteczka z zaakceptowanym regulaminem i phpSessionId :/
     ChanStats("kiwi", "kiwiszon.org/kusaba.php"),
 
-    ChanStats("sis", "sischan.xyz/sis/")
+    ChanStats("sis", "sischan.xyz")
     .users_online_settings("https://sischan.xyz/online.php", "TextNode('", "'), a.next")
     .last_post_settings(('a', 'sis', 's', 'meta'),
                         mitsuba_selector),
@@ -39,9 +39,9 @@ chans = [
     .users_online_settings("https://gowno.club/json/ip-count")
     .last_post_settings(('b',), meguca_selector),
 
-    ChanStats("auchan", "http://auchan.pw/b/")
-    .users_online_settings("http://blogutils.net/olct/online.php?site=auchan.pw/", eStart="</iframe>\');\n$$.write(\"", eStop="\");\n\n$_"),
-    # .last_post_settings(('b'),  )
+    ChanStats("auchan", "http://auchan.pw")
+    .users_online_settings("http://blogutils.net/olct/online.php?site=auchan.pw/", eStart="</iframe>\');\n$$.write(\"", eStop="\");\n\n$_")
+    .last_post_settings(('b', 'kuc', 'hebe'), ".reflink > a:nth-of-type(2)"),
 
     ChanStats("korniszon", "kornichan.xyz")
     .users_online_settings("https://kornichan.xyz/online.php", "innerHTML+='", "';var")

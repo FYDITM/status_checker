@@ -27,6 +27,11 @@ div {
     align-self: center;
 }
 
+table {
+    margin:auto;
+}
+
+
 .ok {
     color: green;
 }
@@ -38,6 +43,7 @@ div {
 .no {
     color: red;
 }
+
 
 .bike {
     width: 18px;
