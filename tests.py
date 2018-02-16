@@ -1,6 +1,8 @@
 import pytest
 import chans_settings
 import chan_stats
+import multiprocessing
+import concurrent.futures
 
 
 # @pytest.fixture
@@ -20,6 +22,30 @@ def test_chan_list():
     assert len(chans) > 2
     for chan in chans:
         assert chan.users_online == "n/a"
+        assert chan.status == "n/a"
+
+
+def test_chan_stats():
+    chans = chans_settings.chans
+    # pool = multiprocessing.Pool(4)
+    with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
+        results = [executor.submit(c.parse_status) for c in chans]
+        output = [r.result() for r in results]
+        for c in chans:
+            assert c.status is not None
+        working_chans = list(filter(lambda c: c.OK, chans))
+        users_chans = filter(lambda ch: ch.users_online_url is not None, working_chans)
+        posts_chans = filter(lambda ch: ch.boards is not None, working_chans)
+        user_results = [executor.submit(c.check_users_online) for c in users_chans]
+        post_results = [executor.submit(c.get_current_post, c.boards_url + "/b",) for c in posts_chans]
+        users_output = [u.result() for u in user_results]
+        posts_output = [p.result() for p in post_results]
+        for c in users_chans:
+            assert c.users_online != "n/a"
+        for p in posts_output:
+            assert p is not None
+        for c in chans:
+            c.status != "n/a"
 
 # @pytest.fixture
 # def app():

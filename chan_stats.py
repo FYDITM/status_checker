@@ -11,7 +11,7 @@ not_available = "n/a"
 
 class ChanStats:
 
-    def __init__(self, name, address):
+    def __init__(self, name, address, cookie=None):
         self.name = name
         self.address = address
         self.OK = False
@@ -21,6 +21,7 @@ class ChanStats:
         self.users_online_url = None
         self.boards = None
         self.posts_per_hour = None
+        self.cookie = cookie
         if "http://" not in self.address:
             self.address = "http://" + self.address
 
@@ -39,7 +40,7 @@ class ChanStats:
         self.online_selector = selector
         return self
 
-    def last_post_settings(self, boards, selector, url=None, cookie=None):
+    def last_post_settings(self, boards, selector, url=None):
         """
         :param boards: krotka z boardami, np ('b', 'thc', 'soc')
         :param selector: słownik atrybutów cssowych elementu, np {'class':'quotePost'}
@@ -47,13 +48,15 @@ class ChanStats:
         """
         self.boards = boards
         self.post_selector = selector
-        self.boards_url = url
-        self.cookie = cookie
+        if url is not None:
+            self.boards_url = url
+        else:
+            self.boards_url = self.address
         return self
 
     def get_response(self, url, operation):
         try:
-            response = requests.get(url, verify=False, timeout=timeout)
+            response = requests.get(url, verify=False, timeout=timeout, cookies=self.cookie)
             return response
         except requests.exceptions.ConnectionError:
             logger.info("ConnectionError przy sprawdzaniu {0} na {1}".format(operation, self.name))

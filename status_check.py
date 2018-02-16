@@ -9,6 +9,7 @@ import logging.handlers
 import random
 import subprocess
 from chans_settings import chans
+import concurrent.futures
 
 from dao import DatabaseConnector, dateformat, short_dateformat
 
@@ -22,21 +23,24 @@ irc_servs = OrderedDict()
 running = False
 sleep_minutes = 5
 trk_count = 6
+processes = 4
 last_check = None
 last_posts_check = None
 log_level = logging.INFO
 logger = None
 db = None
+checking_fred = None
 
 
 def initialize():
+    print("kurewa")
     init_logger()
     logger.info("Inicjalizacja...")
     logger.debug("Karol: " + str(karol_present))
     try:
         start_checking()
     except Exception as e:
-        logger.error("Problem przy startowaniu pętli sprawdzającej: " + e)
+        logger.error("Problem przy startowaniu pętli sprawdzającej: ", e)
 
 
 def chansort(chan):
@@ -50,6 +54,7 @@ def chansort(chan):
 
 def init_logger():
     global logger
+    print("logger")
     max_file_size = 52428800  # 50 MB
     log_filename = "status.log"
     logger = logging.getLogger("rowerek")
@@ -103,46 +108,57 @@ def report_status(address, status_code):
 #         result += "(kod statusu: " + str(status_code) + ")"
 #     irc_servs[server] = result
 
+def check_single_chan(chan):
+    logger.debug("Sprawdzenia " + chan.address)
+    chan.parse_status()
+    logger.debug(chan.status)
+    if chan.OK:
+        chan.check_users_online()
+
+
+def check_chan_posts(chan):
+    if not chan.OK:
+        report_status(chan.address, chan.status_code)
+        return
+    db = DatabaseConnector()
+    chan.check_posts_per_hour(db)
+    db.insert_stats_record(chan.name, str(last_check), chan.OK, chan.users_online, chan.posts_per_hour)
+    db.dispose()
+
 
 def check_continously():
     global last_check, last_posts_check
-
     while running:
         logger.debug("Sprawdzam statusy serwisów...")
-        for chan in chans:
-            logger.debug("Sprawdzenia " + chan.address)
-            chan.parse_status()
-            logger.debug(chan.status)
-            if chan.OK:
-                chan.check_users_online()
+        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+            chan_results = [executor.submit(check_single_chan, c) for c in chans]
+            output = [r.result() for r in chan_results]
 
         last_check = datetime.now()
 
         if last_posts_check is None or datetime.now() - last_posts_check >= timedelta(hours=1):
             logger.debug("Sprawdzam posty...")
-            db = DatabaseConnector()
-            for chan in chans:
-                if not chan.OK:
-                    report_status(chan.address, chan.status_code)
-                    continue
-                chan.check_posts_per_hour(db)
-                db.insert_stats_record(chan.name, str(last_check), chan.OK, chan.users_online, chan.posts_per_hour)
+
+            with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+                posts_results = [executor.submit(check_chan_posts, c) for c in chans]
+                output = [r.result() for r in posts_results]
             last_posts_check = last_check
-            db.dispose()
+
         logger.debug("Zakończono sprawdzanie. Idę spać na {0} minut".format(sleep_minutes))
         time.sleep(sleep_minutes * 60)
 
 
 def start_checking():
+    global running, checking_fred
     checking_fred = threading.Thread(target=check_continously)
-    global running
     running = True
     checking_fred.start()
 
 
 def stop_checking():
-    global running
+    global running, checking_fred
     running = False
+    checking_fred.join()
 
 
 def get_user_agent(request):
@@ -241,17 +257,22 @@ def kopara():
     return render_template("kopara.html", trk=trk)
 
 
+commit = get_commit_hash()
+
+
 @app.route("/")
 def hello():
     view = "Wejście z " + get_user_agent(request)
     trk = random.choice(range(trk_count))
+    print("heloł")
     logger.info(view)
     chanlist = sorted(chans, key=chansort, reverse=True)
-    return render_template('index.html', chans=chanlist, last_check=last_check, trk=trk, commit_hash=get_commit_hash())
+    return render_template('index.html', chans=chanlist, last_check=last_check, trk=trk, commit_hash=commit)
 
 
 initialize()
 if __name__ == "__main__":
+
     try:
         app.run()
     except Exception as e:
