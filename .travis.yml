@@ -2,6 +2,8 @@ branches:
     only: 
     - master
 
+sudo: required
+
 language: python
 
 python:
@@ -9,6 +11,7 @@ python:
 
 install: 
     - pip install -r requirements.txt
+    - sudo sed -i "$a 185.31.160.192  karachan.org" /etc/hosts
 
 script:
     - pytest tests.py -s
