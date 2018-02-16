@@ -33,7 +33,6 @@ checking_fred = None
 
 
 def initialize():
-    print("kurewa")
     init_logger()
     logger.info("Inicjalizacja...")
     logger.debug("Karol: " + str(karol_present))
@@ -54,7 +53,6 @@ def chansort(chan):
 
 def init_logger():
     global logger
-    print("logger")
     max_file_size = 52428800  # 50 MB
     log_filename = "status.log"
     logger = logging.getLogger("rowerek")
