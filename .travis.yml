@@ -11,6 +11,7 @@ python:
 
 install: 
     - pip install -r requirements.txt
+    - sudo chmod a+w /etc/hosts
     - sudo echo "185.31.160.192  karachan.org" >> /etc/hosts
 
 script:
