@@ -32,14 +32,15 @@ def check_posts(chan):
 
 def test_chan_stats():
     chans = chans_settings.chans
-    # pool = multiprocessing.Pool(4)
     with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
         results = [executor.submit(c.parse_status) for c in chans]
         output = [r.result() for r in results]
         for c in chans:
             assert c.status is not None
         working_chans = list(filter(lambda c: c.OK, chans))
+        dead_chans = list(filter(lambda c: c.OK is False, chans))
         print("działające czany: {0}/{1}".format(len(list(working_chans)), len(chans)))
+        print("zdechłe: {0}".format(list(map(lambda x: x.name, dead_chans))))
         users_chans = list(filter(lambda ch: ch.users_online_url is not None, working_chans))
         posts_chans = list(filter(lambda ch: ch.boards is not None, working_chans))
         user_results = [executor.submit(c.check_users_online) for c in users_chans]

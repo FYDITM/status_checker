@@ -11,10 +11,10 @@ chans = [
     .last_post_settings(('id', '4', 'b', 'z', '$', 'c', 'co', 'a', 'edu', 'f', 'fa', 'h', 'wat', 'ku', 'l', 'med', 'mil', 'mu', 'oc', 'p', 'sp', 'tech', 'thc', 'trv', 'v8', 'vg', 'x', 'og', 'r', 'kara', 'g', 's'),
                         mitsuba_selector),
 
-    # ChanStats('vi', 'pl.vichan.net')
-    # .users_online_settings("https://pl.vichan.net/online.php", "innerHTML+='", "| Aktywne")
-    # .last_post_settings(('b', 'cp', 'id', 'int', 'r+oc', 'veto', 'waifu', 'btc', 'c', 'c++', 'fso', 'h', 'ku', 'lsd', 'psl', 'sci', 'trv', 'vg', 'a', 'hk', 'lit', 'mu', 'tv', 'x', 'med', 'pr', 'pro', 'psy', 'sex', 'soc', 'sr', 'swag', 'chan', 'meta'),
-    #                     tinyboard_selector),
+    ChanStats('vi', 'pl.vichan.net')
+    .users_online_settings("https://pl.vichan.net/online.php", "innerHTML+='", "| Aktywne")
+    .last_post_settings(('b', 'cp', 'id', 'int', 'r+oc', 'veto', 'waifu', 'btc', 'c', 'c++', 'fso', 'h', 'ku', 'lsd', 'psl', 'sci', 'trv', 'vg', 'a', 'hk', 'lit', 'mu', 'tv', 'x', 'med', 'pr', 'pro', 'psy', 'sex', 'soc', 'sr', 'swag', 'chan', 'meta'),
+                        tinyboard_selector),
 
     ChanStats("wilno", "wilchan.org")
     .users_online_settings("https://wilchan.org/licznik.php")
