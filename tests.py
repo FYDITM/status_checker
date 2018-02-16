@@ -25,6 +25,11 @@ def test_chan_list():
         assert chan.status == "n/a"
 
 
+def check_posts(chan):
+    post = chan.get_current_post(chan.boards_url + "/b/")
+    return chan.name, post
+
+
 def test_chan_stats():
     chans = chans_settings.chans
     # pool = multiprocessing.Pool(4)
@@ -37,14 +42,17 @@ def test_chan_stats():
         users_chans = filter(lambda ch: ch.users_online_url is not None, working_chans)
         posts_chans = filter(lambda ch: ch.boards is not None, working_chans)
         user_results = [executor.submit(c.check_users_online) for c in users_chans]
-        post_results = [executor.submit(c.get_current_post, c.boards_url + "/b",) for c in posts_chans]
+        post_results = [executor.submit(check_posts, c) for c in posts_chans]
         users_output = [u.result() for u in user_results]
         posts_output = [p.result() for p in post_results]
         for c in users_chans:
+            print("{0}: {1} online".format(c.name, c.users_online))
             assert c.users_online != "n/a"
         for p in posts_output:
-            assert p is not None
+            print("post id na {0}: {1}".format(*p))
+            assert p[1] is not None
         for c in chans:
+            print("status {0}: {1}".format(c.name, c.status))
             c.status != "n/a"
 
 # @pytest.fixture
