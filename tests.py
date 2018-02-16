@@ -39,14 +39,18 @@ def test_chan_stats():
         for c in chans:
             assert c.status is not None
         working_chans = list(filter(lambda c: c.OK, chans))
-        users_chans = filter(lambda ch: ch.users_online_url is not None, working_chans)
-        posts_chans = filter(lambda ch: ch.boards is not None, working_chans)
+        print("działające czany: {0}/{1}".format(len(list(working_chans)), len(chans)))
+        users_chans = list(filter(lambda ch: ch.users_online_url is not None, working_chans))
+        posts_chans = list(filter(lambda ch: ch.boards is not None, working_chans))
         user_results = [executor.submit(c.check_users_online) for c in users_chans]
         post_results = [executor.submit(check_posts, c) for c in posts_chans]
         users_output = [u.result() for u in user_results]
         posts_output = [p.result() for p in post_results]
+        print("czany z userami: {0}".format(len(users_chans)))
+        print("czany z postami: {0}".format(len(posts_chans)))
+
         for c in users_chans:
-            print("{0}: {1} online".format(c.name, c.users_online))
+            print("online na {0}: {1}".format(c.name, c.users_online))
             assert c.users_online != "n/a"
         for p in posts_output:
             print("post id na {0}: {1}".format(*p))
