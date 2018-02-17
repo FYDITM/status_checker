@@ -59,11 +59,11 @@ class ChanStats:
             response = requests.get(url, verify=False, timeout=timeout, cookies=self.cookie)
             return response
         except requests.exceptions.ConnectionError:
-            logger.info("ConnectionError przy sprawdzaniu {0} na {1}".format(operation, self.name))
+            logger.debug("ConnectionError przy sprawdzaniu {0} na {1}".format(operation, self.name))
         except requests.exceptions.ConnectTimeout:
-            logger.info("ConnectTimeout przy sprawdzaniu {0} na {1}".format(operation, self.name))
+            logger.debug("ConnectTimeout przy sprawdzaniu {0} na {1}".format(operation, self.name))
         except requests.exceptions.ReadTimeout:
-            logger.info("ReadTimeout przy sprawdzaniu {0} na {1}".format(operation, self.name))
+            logger.debug("ReadTimeout przy sprawdzaniu {0} na {1}".format(operation, self.name))
         except Exception as ex:
             logger.exception("Błąd przy sprawdzaniu {0} na {1}, url: {2}".format(operation, self.name, url))
 

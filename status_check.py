@@ -79,6 +79,7 @@ def report_status(address, status_code):
     msg = "Wygląda na to, że {0} spadł z rowerka. ".format(address)
     if status_code != -1:
         msg += "Kod statusu {0}".format(status_code)
+    logger.info(msg)
     if karol_present:
         logger.debug("Wysyłam wiadomość przez Karola...")
         if "vichan" in address:
