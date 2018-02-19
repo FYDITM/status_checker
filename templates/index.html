@@ -19,7 +19,7 @@
             <ul>
             {%for chan in chans %} {% if chan.OK %}
             
-            <tr class="ok">
+            <tr class="ok" title="{{chan.notes}}">
                 <td>
                     <img class="bike" alt="✓" src="{{url_for('static', filename='jezdzi.svg')}}"> <a href="/stats/{{chan.name}}">{{chan.name}}</a>            
                 </td>
@@ -34,7 +34,7 @@
                 </td>
             </tr>
             {% else %}
-            <tr class="no">
+            <tr class="no" title="{{chan.notes}}">
                 <td>
                     <img class="bike" alt="❌" src="{{url_for('static', filename='spadlo.svg')}}"> {{chan.name}}
                 </td>

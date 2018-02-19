@@ -14,6 +14,10 @@ class ChanStats:
     def __init__(self, name, address, cookie=None):
         self.name = name
         self.address = address
+        if "http://" not in self.address:
+            self.address = "http://" + self.address
+        self.boards_url = self.address
+        self.notes = ""
         self.OK = False
         self.users_online = not_available
         self.status = not_available
@@ -22,8 +26,6 @@ class ChanStats:
         self.boards = None
         self.posts_per_hour = None
         self.cookie = cookie
-        if "http://" not in self.address:
-            self.address = "http://" + self.address
 
     def users_online_settings(self, url, eStart=None, eStop=None, selector=None):
         """
@@ -50,8 +52,10 @@ class ChanStats:
         self.post_selector = selector
         if url is not None:
             self.boards_url = url
-        else:
-            self.boards_url = self.address
+        return self
+
+    def set_notes(self, notes):
+        self.notes = notes
         return self
 
     def get_response(self, url, operation):

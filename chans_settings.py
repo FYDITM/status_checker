@@ -22,7 +22,8 @@ chans = [
                         tinyboard_selector),
 
     ChanStats("heretyk", "heretyk.org")
-    .last_post_settings(('b', 't', 'meta'), ".reflink > a:nth-of-type(2)"),
+    .last_post_settings(('b', 't', 'meta'), ".reflink > a:nth-of-type(2)")
+    .set_notes("104.27.190.163"),
 
     ChanStats("kiwi", "kiwiszon.org/kusaba.php", cookie={"accept": "1"})
     .users_online_settings("https://kiwiszon.org/online.php?action=update")
