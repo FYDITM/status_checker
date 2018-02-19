@@ -16,6 +16,7 @@ install:
 before_script:
     - sudo chmod a+w /etc/hosts
     - sudo echo "185.31.160.192 karachan.org" >> /etc/hosts
+    - sudo echo "104.27.190.163 heretyk.org" >> /etc/hosts
 
 script:
     - pytest tests.py -s
