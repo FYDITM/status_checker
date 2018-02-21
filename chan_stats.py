@@ -155,7 +155,7 @@ class ChanStats:
             if last_id and current_id:
                 posts_sum += (current_id - last_id)
                 if posts_sum < 0:
-                    if self.posts_per_hour > 0:
+                    if self.posts_per_hour is not None and self.posts_per_hour > 0:
                         # jeśli teraz wychodzi mniej niż zero, to prawdopodobnie były usunięte jakieś posty, więc na razie dajemy ostatnią wartość
                         posts_sum = self.posts_per_hour
                     else:
