@@ -28,8 +28,8 @@ chans = [
     .users_online_settings("https://kiwiszon.org/online.php?action=update")
     .last_post_settings(('b', 'wc'), kusaba_selector, "https://kiwiszon.org/boards"),
 
-    ChanStats("sis", "sischan.xyz")
-    .users_online_settings("https://sischan.xyz/online.php", "TextNode('", "'), a.next")
+    ChanStats("sis", "sischan.pw")
+    .users_online_settings("https://sischan.pw/online.php", "TextNode('", "'), a.next")
     .last_post_settings(('a', 'sis', 's', 'meta'),
                         mitsuba_selector),
 

@@ -136,7 +136,7 @@ def check_continously():
         last_check = datetime.now()
 
         if last_posts_check is None or datetime.now() - last_posts_check >= timedelta(hours=1):
-            logger.debug("Sprawdzam posty...")
+            logger.info("Sprawdzam posty...")
 
             with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
                 posts_results = [executor.submit(check_chan_posts, c) for c in chans]
