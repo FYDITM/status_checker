@@ -39,7 +39,7 @@ chans = [
 
     ChanStats("gówno", "gowno.club")
     .users_online_settings("https://gowno.club/json/ip-count")
-    .last_post_settings(('b',), meguca_selector),
+    .last_post_settings(('b',), meguca_selector),  # nie dodawać innych desek bo id postów jest liczone globalnie
 
     ChanStats("auchan", "http://auchan.pw")
     .users_online_settings("http://blogutils.net/olct/online.php?site=auchan.pw/", eStart="</iframe>\');\n$$.write(\"", eStop="\");\n\n$_")
@@ -48,6 +48,9 @@ chans = [
     ChanStats("korniszon", "kornichan.xyz")
     .users_online_settings("https://kornichan.xyz/online.php", "innerHTML+='", "';var")
     .last_post_settings(('b', '$', 'a', 'c', 'ku', 'r4', 'sp', 'thc', 'trv', 'vg', 'f', 'fa', 'lit', 'mu', 'dt', 'hp', 'kib', 'mil', 'pol', 'x', 'med', 's', 'waifu', 'z', 'fz', 'meta'), tinyboard_selector),
+
+    ChanStats("chanarchive", "szonarchive.pw")
+    .set_notes("https://szonarchive.pw/")
 
     # .last_post_settings(("b","$","a","c","ku","r4","sp","thc","trv","vg","f","fa","lit","mu","dt","hp","kib","mil","pol","x","med","s","waifu","z","fz","meta"),
     #     tinyboard_selector),

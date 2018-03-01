@@ -273,6 +273,7 @@ initialize()
 if __name__ == "__main__":
 
     try:
+        # app.run()
         app.run()
     except Exception as e:
         logger.critical("Problem przy startowaniu webaplikacji: " + e)
