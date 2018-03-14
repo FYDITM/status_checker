@@ -1,0 +1,106 @@
+body {
+    background-color: #0a0a0a;
+    margin: auto;
+    max-width: 60%;
+    line-height: 1.6;
+    font-size: 14px;
+    color: #444;
+    padding: 0 10px;
+    min-height: 100%;
+    font-family: Verdana
+}
+
+@media only screen and (max-width: 1024px) {
+    .background-vid {
+        display: none;
+    }
+    body{
+        max-width: 100%;
+        font-size:12px;
+    }
+    .content { width:100%; }
+    .content div {
+        width: 100%;
+    }
+}
+
+div {
+    /*display: flex;*/
+    align-self: center;
+}
+
+table {
+    margin:auto;
+}
+
+
+.ok {
+    color: green;
+}
+
+.ok a:link, .ok a:visited {
+    color: green;
+}
+
+.no {
+    color: red;
+}
+
+
+.bike {
+    width: 18px;
+    height: 18px;
+}
+
+footer {
+    font-size: 10px;
+    margin: 80px auto auto auto;
+    text-align: center; 
+}
+footer div {
+    width: 60% !important;
+}
+
+.background {    
+    background-image: url("/static/twarz.jpg");
+    background-repeat: no-repeat;
+    background-position: center;
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    overflow: hidden;
+    z-index: -100;
+}
+
+.background-vid {
+    display:none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+h4 {
+    text-align: center;
+}
+
+td {
+    padding-right:10px;
+}
+
+.content {
+    padding: 10px;
+    margin: 10px auto;
+    width:90%;
+    background-color: rgba(0, 0, 0, .85);
+}
+
+.content div {
+    margin-left: auto;
+    margin-right: auto;
+    width:80%;
+}
+

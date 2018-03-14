@@ -3,7 +3,7 @@
 
 <head>
     <title>Statystyki dla {{chan_name}}</title>
-    <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='style.css')}}">
+    <link rel="stylesheet" type="text/css" {% if dark %} href="{{url_for('static', filename='dark.css')}}" {% else %} href="{{url_for('static', filename='bicycle.css')}}" {% endif %}> 
     <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='pikaday.css')}}">
     <script src="{{url_for('static', filename='chart.min.js')}}"></script>
     <script src="{{url_for('static', filename='pikaday.js')}}"></script>
