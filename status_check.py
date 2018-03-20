@@ -45,7 +45,7 @@ def initialize():
 def chansort(chan):
     if not chan.OK:
         return -2
-    if chan.users_online == "n/a":
+    if chan.users_online == "n/d":
         return -1
     else:
         return int(chan.users_online)
@@ -282,7 +282,6 @@ def hello():
     dark = current_style == 'dark'
     view = "Wejście z " + get_user_agent(request)
     trk = random.choice(range(trk_count))
-    print("heloł")
     logger.info(view)
     chanlist = sorted(chans, key=chansort, reverse=True)
     return render_template('index.html', chans=chanlist, last_check=last_check, trk=trk, commit_hash=commit, dark=dark)

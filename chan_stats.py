@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 
 logger = logging.getLogger("rowerek")
 timeout = 30
-not_available = "n/a"
+not_available = "n/d"
 
 
 class ChanStats:

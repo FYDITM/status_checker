@@ -9,14 +9,20 @@
 
 <body>
     <div class="background">
+        {% if not dark %}
         <video loop autoplay class="background-vid">
             <source src="static/trk{{trk}}.webm" type="video/webm">
         </video>
+        {% endif %}
     </div>
     <div class="content">
     <div>
         <h4>Aktualny stan czanów:</h4>
         <table>
+            <th>strona</th>
+            <th>stan</th>
+            <th>online</th>
+            <th>posty na godzinę</th>
             <ul>
             {%for chan in chans %} {% if chan.OK %}
             
@@ -24,14 +30,14 @@
                 <td>
                     <img class="bike" alt="✓" src="{{url_for('static', filename='jezdzi.svg')}}"> <a href="/stats/{{chan.name}}">{{chan.name}}</a>            
                 </td>
-                <td>
+                <td class="center">
                     {{chan.status}}
                 </td>
-                <td>
-                   {% if chan.users_online %} online: {{chan.users_online}} {% endif %}
+                <td class="right">
+                   {% if chan.users_online %} {{chan.users_online}} {% else %} n/d {% endif %}
                 </td>
-                <td>
-                    {% if chan.posts_per_hour is not none %} posty na godzinę: {{chan.posts_per_hour}} {% endif %}
+                <td class="right">
+                    {% if chan.posts_per_hour is not none %} {{chan.posts_per_hour}} {% else %} n/d {% endif %}
                 </td>
             </tr>
             {% else %}

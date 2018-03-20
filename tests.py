@@ -21,8 +21,8 @@ def test_chan_list():
     chans = chans_settings.chans
     assert len(chans) > 2
     for chan in chans:
-        assert chan.users_online == "n/a"
-        assert chan.status == "n/a"
+        assert chan.users_online == "n/d"
+        assert chan.status == "n/d"
 
 
 def check_posts(chan):
