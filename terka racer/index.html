@@ -4,11 +4,14 @@
 <head>
     <meta charset="UTF-8">
     <script src="phaser.min.js"></script>
+    <script src="play.js"></script>
     <title>TRK Racer</title>
 </head>
 
 <body>
     <script>
+
+    var TRK = TRK || {};
     var config = {
         type: Phaser.AUTO,
         width: 800,
@@ -18,111 +21,12 @@
             arcade: {
                 gravity: { y: 500 }
             }
-        },
-        scene: {
-            preload: preload,
-            create: create,
-            update: update
         }
     };
 
-    var game = new Phaser.Game(config);
-    var player;
-    var platforms;
-    var cursors;
-    var a;
-
-    function preload() {
-        this.load.image('background', 'assets/background.png');
-        //this.load.spritesheet('background', 'assets/background.png', { frameWidth: 720, frameHeight: 320 });
-        //this.load.spritesheet('soil_ground', 'assets/soil_ground.png', 0, this.height-70,this.width, 70);
-        this.load.image('soil_ground', 'assets/soil_ground.png');
-        this.load.spritesheet('racer', 'assets/racer.png', { frameWidth: 128, frameHeight: 128 });
-
-    }
-
-    function create() {
-
-       
-        //this.add.image(400, 300, 'background').setScale(2);
-        this.background = this.add.tileSprite(160, 270, 1600, 320, 'background').setScale(2);
-        platforms = this.physics.add.staticGroup();
-        platforms.create(512, 600, 'soil_ground').setScale(2).refreshBody();
-        this.ground = this.add.tileSprite(512, 600, 1440, 14, 'soil_ground').setScale(2);
-        //this.background.setOrigin(0.5);
-
-        // let cam = this.cameras.main;
-        // // Set its viewport as same as our game dimension
-        // cam.setViewport(0,0,1200,640);
-        // // Center align the camera to occupy all our game objects
-        // cam.centerToBounds();
-
-        //platforms.create(800, 500, 'soil_ground');
-
-
-        player = this.physics.add.sprite(400, 450, 'racer');
-        player.setBounce(0.2);
-        //player.setCollideWorldBounds(true);
-        player.body.setGravityY(400);
-        this.physics.add.collider(player, platforms);
-
-        this.anims.create({
-            key: 'ride',
-            frames: this.anims.generateFrameNumbers('racer', { start: 0, end: 3 }),
-            frameRate: 5,
-            repeat: -1
-        });
-
-        this.anims.create({
-            key: 'fall',
-            frames: [{ key: 'racer', frame: 5 }],
-            frameRate: 5,
-        });
-
-        this.anims.create({
-            key: 'jump',
-            frames: [{ key: 'racer', frame: 4 }],
-            frameRate: 5,
-        });
-        this.cameras.main.setSize(800, 600);
-        cursors = this.input.keyboard.createCursorKeys();
-        // this.cameras.main.startFollow(player);
-        // this.cameras.main.setBounds(0, 0, 1800, 0);
-        player.fixedToCamera = true;
-        a = Phaser.Math.RND.integerInRange(1, 5);
-         this.physics.world.setBounds(0, 0, 1310, 600);
-    }
-
-    function update() {
-        var t1 = this.add.text(10, 20, a);
-
-        var bounds = this.physics.world.bounds;
-         player.body.x = Phaser.Math.Wrap(player.body.x, bounds.left, bounds.right);
-         player.body.y = Phaser.Math.Wrap(player.body.y, bounds.top, bounds.bottom);
-        if (cursors.left.isDown) {
-            player.setVelocityX(-160);
-        } else if (cursors.right.isDown) {
-
-            player.setVelocityX(300);
-           //    this.cameras.main.x -= 4;
-
-            player.anims.play('ride', true);
-            // this.background.tilePositionX+= 1;
-            // this.ground.tilePositionX+= 2;
-        } else {
-            player.setVelocityX(0);
-
-            player.anims.play('ride');
-        }
-        if (cursors.up.isDown && player.body.touching.down) {
-            player.setVelocityY(-800);
-        }
-        if (player.body.velocity.y < -50 && !player.body.touching.down) {
-            player.anims.play('jump', true);
-        } else if (player.body.velocity.y > 0 && !player.body.touching.down) {
-            player.anims.play('fall', true);
-        }
-    }
+    TRK.game = new Phaser.Game(config);
+    TRK.game.state.add("gameplay", TRK.gameplay);
+    TRK.game.state.start("gameplay");
     </script>
 </body>
 

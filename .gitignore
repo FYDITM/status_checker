@@ -176,3 +176,4 @@ ENV/
 *.bat
 .idea/
 rowerek.db
+*.db-journal
