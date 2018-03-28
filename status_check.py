@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from flask import Flask, request, render_template, abort
+from flask import Flask, request, redirect, render_template, abort
 from datetime import datetime, timedelta
 from collections import OrderedDict
 import threading
@@ -45,7 +45,7 @@ def initialize():
 def chansort(chan):
     if not chan.OK:
         return -2
-    if chan.users_online == "n/a":
+    if chan.users_online == "n/d":
         return -1
     else:
         return int(chan.users_online)
@@ -73,6 +73,9 @@ def get_commit_hash():
     if not h:
         h = "???????"
     return h
+
+
+commit = get_commit_hash()
 
 
 def report_status(address, status_code):
@@ -221,6 +224,8 @@ def parse_dates(date_from, date_to):
 
 @app.route("/stats/<chan_name>", methods=['GET', 'POST'])
 def show_stats(chan_name):
+    current_style = request.cookies.get('style')
+    dark = current_style == 'dark'
     dates = get_dates(request)
     if dates is None:
         return "Coś zjebałeś z tymi datami stary"
@@ -245,28 +250,41 @@ def show_stats(chan_name):
     users = False
     users = round_numbers(stats, 1)
     posts = round_numbers(stats, 2)
-    return render_template('chart.html', chan_name=chan_name, periods=periods, posts=posts, users=users)
+    return render_template('chart.html', chan_name=chan_name, periods=periods, posts=posts, users=users, dark=dark)
 
 
 @app.route("/kopara")
 def kopara():
+    current_style = request.cookies.get('style')
+    dark = current_style == 'dark'
     view = "KOPACZ {0}".format(get_user_agent(request))
     logger.info(view)
     trk = random.choice(range(trk_count))
-    return render_template("kopara.html", trk=trk)
+    return render_template("kopara.html", trk=trk, dark=dark)
 
 
-commit = get_commit_hash()
+@app.route("/styleSwitch")
+def switch_style():
+    current_style = request.cookies.get('style')
+    redirect_to_index = redirect('/')
+    response = app.make_response(redirect_to_index)
+    if current_style == 'dark':
+        new_style = 'rowerek'
+    else:
+        new_style = 'dark'
+    response.set_cookie('style', value=new_style)
+    return response
 
 
 @app.route("/")
 def hello():
+    current_style = request.cookies.get('style')
+    dark = current_style == 'dark'
     view = "Wejście z " + get_user_agent(request)
     trk = random.choice(range(trk_count))
-    print("heloł")
     logger.info(view)
     chanlist = sorted(chans, key=chansort, reverse=True)
-    return render_template('index.html', chans=chanlist, last_check=last_check, trk=trk, commit_hash=commit)
+    return render_template('index.html', chans=chanlist, last_check=last_check, trk=trk, commit_hash=commit, dark=dark)
 
 
 initialize()

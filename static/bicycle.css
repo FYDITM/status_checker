@@ -9,15 +9,15 @@ body {
     font-family: Verdana
 }
 
-@media screen and (max-width: 480px) {
+@media only screen and (max-width: 1024px) {
     .background-vid {
         display: none;
     }
     body{
-        max-width: 100%;
+        max-width: 100% !important;
         font-size:12px;
     }
-    .content { width:100%; }
+    .content { width:100% !important; }
     .content div {
         width: 100%;
     }
@@ -31,7 +31,13 @@ div {
 table {
     margin:auto;
 }
+th, td {
+    padding: 0px 5px 0px 5px;
+}
 
+.center {
+    text-align: center;
+}
 
 .ok {
     color: green;

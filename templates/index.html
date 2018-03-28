@@ -3,20 +3,26 @@
 
 <head>
     <title>Czy twoje ulubione forum o kupie jeździ na rowerku?</title>
-    <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='style.css')}}">
+    <link rel="stylesheet" type="text/css" {% if dark %} href="{{url_for('static', filename='dark.css')}}" {% else %} href="{{url_for('static', filename='bicycle.css')}}" {% endif %}> 
     <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
 </head>
 
 <body>
     <div class="background">
+        {% if not dark %}
         <video loop autoplay class="background-vid">
             <source src="static/trk{{trk}}.webm" type="video/webm">
         </video>
+        {% endif %}
     </div>
     <div class="content">
     <div>
         <h4>Aktualny stan czanów:</h4>
         <table>
+            <th>strona</th>
+            <th>stan</th>
+            <th>online</th>
+            <th>posty na godzinę</th>
             <ul>
             {%for chan in chans %} {% if chan.OK %}
             
@@ -24,14 +30,14 @@
                 <td>
                     <img class="bike" alt="✓" src="{{url_for('static', filename='jezdzi.svg')}}"> <a href="/stats/{{chan.name}}">{{chan.name}}</a>            
                 </td>
-                <td>
+                <td class="center">
                     {{chan.status}}
                 </td>
-                <td>
-                   {% if chan.users_online %} online: {{chan.users_online}} {% endif %}
+                <td class="right">
+                   {% if chan.users_online %} {{chan.users_online}} {% else %} n/d {% endif %}
                 </td>
-                <td>
-                    {% if chan.posts_per_hour is not none %} posty na godzinę: {{chan.posts_per_hour}} {% endif %}
+                <td class="right">
+                    {% if chan.posts_per_hour is not none %} {{chan.posts_per_hour}} {% else %} n/d {% endif %}
                 </td>
             </tr>
             {% else %}
@@ -46,24 +52,28 @@
             </tr>
             {% endif %} {% endfor %}
         </ul>
-    </table>
+    </table>     
     </div>
    
     <footer>
         {% if last_check %}
         <div>Sprawdzono: {{last_check.strftime("%Y-%m-%d %X")}}</div> {% endif %}
-        <div>Kontakt: tomekterka@loves.dicksinhisan.us</div>
-        <div><span>{{commit_hash}}</span> <span><a href="/kopara">Wesprzyj</a></span></div>
+        <div><span><a href="/styleSwitch">Styl {% if dark %} rowerowy {% else %} mroczny {% endif %}</a></span>|<span><a href="/kopara">Wesprzyj</a></span></div>
+        <div>Kontakt: tomekterka@loves.dicksinhisan.us</div>        
+        <div><a href="https://czyjezdzi.tk/">czyjezdzi.tk</a> - alternatywny sprawdzacz statusów</div>
+        <div><span>{{commit_hash}}</span></span></div>
     </footer>
     </div>
 </body>
 
 <script>
     document.onload = function(){
-        if (window.innerWidth <480) {
-            document.getElementsByClassName("background-vid")[0].removeAttribute("autoplay")
-        }
+        // if (window.innerWidth <480) {
+        //     document.getElementsByClassName("background-vid")[0].removeAttribute("autoplay")
+        // }
     }
+
+
 </script>
 </html>
 
