@@ -51,7 +51,8 @@ chans = [
 
     ChanStats("terchan", "terchan.ml")
     .users_online_settings("https://terchan.ml/online.php", eStart="createTextNode('", eStop="'), a.nextSibling)")
-    .last_post_settings(('',), kusaba_selector),
+    .last_post_settings(('',), kusaba_selector)
+    .set_notes("104.24.98.44"),
 
     ChanStats("chanarchive", "szonarchive.pw")
 
