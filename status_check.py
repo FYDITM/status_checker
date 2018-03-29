@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from flask import Flask, request, redirect, render_template, abort
+from flask import Flask, request, redirect, render_template, abort, jsonify
 from datetime import datetime, timedelta
 from collections import OrderedDict
 import threading
@@ -10,6 +10,9 @@ import random
 import subprocess
 from chans_settings import chans
 import concurrent.futures
+import uuid
+import hashlib
+import hmac
 
 from dao import DatabaseConnector, dateformat, short_dateformat
 
@@ -245,22 +248,14 @@ def show_stats(chan_name):
         stats = db.calculate_average(chan_name, date_from, date_to)
     except Exception as ex:
         logger.exception(ex)
+        db.dispose()
         return "Coś poszło nie tak, prawdopodobnie nie ma danych z wybranego okresu"
+    db.dispose()
     periods = list(map(lambda x: str(x[0]), stats))
     users = False
     users = round_numbers(stats, 1)
     posts = round_numbers(stats, 2)
     return render_template('chart.html', chan_name=chan_name, periods=periods, posts=posts, users=users, dark=dark)
-
-
-@app.route("/kopara")
-def kopara():
-    current_style = request.cookies.get('style')
-    dark = current_style == 'dark'
-    view = "KOPACZ {0}".format(get_user_agent(request))
-    logger.info(view)
-    trk = random.choice(range(trk_count))
-    return render_template("kopara.html", trk=trk, dark=dark)
 
 
 @app.route("/styleSwitch")
@@ -287,11 +282,61 @@ def hello():
     return render_template('index.html', chans=chanlist, last_check=last_check, trk=trk, commit_hash=commit, dark=dark)
 
 
+# --- TRK Racer ---
+
+@app.route("/racer")
+def racer():
+    current_style = request.cookies.get('style')
+    dark = current_style == 'dark'
+    view = "GRACZ {0}".format(get_user_agent(request))
+    logger.info(view)
+    response = app.make_response(render_template("racer.html", dark=dark))
+    response.set_cookie("_tr", uuid.uuid4().hex)
+    return response
+
+
+@app.route("/highscores", methods=['GET', 'POST'])
+def highscores():
+    db = DatabaseConnector()
+    scores = db.get_scores()
+    db.dispose()
+    return jsonify(scores)
+
+
+@app.route("/setscore", methods=['POST'])
+def setscore():
+    try:
+        tr = request.cookies.get('_tr')
+        data = request.get_json(force=True)
+        logger.debug(data)
+        if data is None:
+            return "Nic z tego stary", 400
+        client_hash = data["_k"]
+        score = data["score"]
+        name = data["name"]
+        logger.info("HIGHSCORE {0}: {1}".format(name, score))
+        server_hash = hashlib.sha224("{0}mmm{1}{2}".format(tr, score, name).encode()).hexdigest()
+        correct = hmac.compare_digest(client_hash, server_hash)
+        if not correct:
+            return "Nic z tego stary", 401
+    except Exception as err:
+        logger.exception(err)
+        return "Nic z tego stary", 403
+    try:
+        db = DatabaseConnector()
+        db.set_score(name, score)
+    except Exception as ex:
+        logger.exception(ex)
+        db.dispose()
+        return "Nic z tego stary", 405
+    db.dispose()
+    return jsonify({"success": True})
+
+
 initialize()
 if __name__ == "__main__":
 
     try:
-        # app.run()
         app.run()
     except Exception as e:
         logger.critical("Problem przy startowaniu webaplikacji: " + e)

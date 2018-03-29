@@ -8,6 +8,9 @@ from datetime import datetime, timedelta
 
 # schemat tabeli posts:
 # id (autoinkrementowany klucz) | chan_name (text) | date (jako timestamp) | board (text) | post_id (integer)
+
+# schemat tabeli scores:
+# id (autoinkrementowany klucz) | name (text) | score (integer) | date (jako str)
 dateformat = "%Y-%m-%d %H:%M:%S.%f"
 short_dateformat = "%Y-%m-%d"
 logger = logging.getLogger("rowerek")
@@ -29,6 +32,8 @@ class DatabaseConnector():
             "CREATE TABLE chan_stats (id INTEGER PRIMARY KEY, chan_name TEXT, date TEXT, ok INTEGER, users INTEGER, posts_per_hour REAL)")
         self.cur.execute(
             "CREATE TABLE posts (id INTEGER PRIMARY KEY, chan_name TEXT, date REAL, board TEXT, post_id INTEGER)")
+        self.cur.execute(
+            "CREATE TABLE scores (id INTEGER PRIMARY KEY, name TEXT, score INTEGER, date TEXT)")
         self.conn.commit()
 
     def insert_stats_record(self, chan_name, date, ok, users, posts_per_hour):
@@ -115,6 +120,16 @@ class DatabaseConnector():
                     posts_total = record[2]
             result = months_result
         return result
+
+    def get_scores(self):
+        self.cur.execute("SELECT name, score FROM scores ORDER BY score DESC LIMIT 5")
+        scores = self.cur.fetchall()  # [(name, score)]
+        result = list(map(lambda x: {'name': x[0], 'score': x[1]}, scores))
+        return result
+
+    def set_score(self, name, score):
+        self.cur.execute("INSERT INTO scores (name, score, date) VALUES (?, ?, ?)", (name, score, str(datetime.now())))
+        self.conn.commit()
 
     def dispose(self):
         self.conn.close()

@@ -5,6 +5,8 @@ var readCookie = function(k) { return (document.cookie.match('(^|; )' + k + '=([
 
 var totalScore = 0;
 
+var top5 = null;
+
 TRK.gameplay.prototype = {
     init: function() {
         this.game.input.maxPointers = 1;
@@ -23,15 +25,19 @@ TRK.gameplay.prototype = {
     },
 
     preload: function() {
-        this.load.image('background', 'assets/images/background.png');
-        this.load.image('soil_ground', 'assets/images/soil_ground.png'); //800x14
-        this.load.spritesheet('racer', 'assets/images/racer.png', 128, 95, 6);
-        this.load.spritesheet('hpbar', 'assets/images/hpbar.png', 153, 26, 2);
+        this.load.image('background', '/static/assets/images/background.png');
+        this.load.image('soil_ground', '/static/assets/images/soil_ground.png'); //800x14
+        this.load.spritesheet('racer', '/static/assets/images/racer.png', 128, 95, 6);
+        this.load.spritesheet('hpbar', '/static/assets/images/hpbar.png', 153, 26, 2);
+        this.load.spritesheet('ponczuchy', 'static/assets/images/ponczuchy.png', 40, 40);
+        this.load.spritesheet('heart', '/static/assets/images/heart.png', 40, 36);
 
-        this.load.audio('uuu', 'assets/sounds/uuu.mp3');
-        this.load.audio('uu', 'assets/sounds/uu.mp3');
-        this.load.audio('u', 'assets/sounds/u.mp3');
-        this.load.audio('hurt', 'assets/sounds/hurt.wav');
+        this.load.audio('uuu', '/static/assets/sounds/uuu.mp3');
+        this.load.audio('uu', '/static/assets/sounds/uu.mp3');
+        this.load.audio('u', '/static/assets/sounds/u.mp3');
+        this.load.audio('hurt', '/static/assets/sounds/hurt.wav');
+        this.load.audio('heal', 'static/assets/sounds/heal.wav');
+        this.load.audio('pon', '/static/assets/sounds/ponczuchy.mp3');
 
     },
 
@@ -52,9 +58,22 @@ TRK.gameplay.prototype = {
         this.uu = this.add.audio('uu');
         this.uuu = this.add.audio('uuu');
         this.hurt = this.add.audio('hurt');
+        this.heal = this.add.audio('heal');
+        this.pon = this.add.audio('pon');
         //this.sound.setDecodedCallback([this.uu, this.uuu], this.ready, this);
 
         this.physics.startSystem(Phaser.Physics.ARCADE);
+
+        this.heart = this.add.sprite(0, 0, 'heart');
+        this.heart.animations.add('idle', [...Array(14).keys()], 10, true, true);
+        this.heart.kill();
+        this.physics.enable(this.heart);
+        this.ponczuchy = this.add.sprite(0, 0, 'ponczuchy');
+        this.ponczuchy.animations.add('idle',[...Array(12).keys()], 10, true, true);
+        this.ponczuchy.kill();
+        this.physics.enable(this.ponczuchy);
+
+
         this.physics.enable(this.player);
         this.player.body.gravity.y = 1400;
         this.player.body.collideWorldBounds = true;
@@ -77,6 +96,16 @@ TRK.gameplay.prototype = {
 
         this.physics.arcade.collide(this.player, this.ground);
         this.physics.arcade.collide(this.player, this.platforms, this.collide, null, this);
+        this.physics.arcade.collide(this.player, this.heart, this.getHeart, null, this);
+        this.physics.arcade.collide(this.player, this.ponczuchy, this.getPonczuchy, null, this);
+
+        if (!this.heart.exists && this.rnd.frac() < 0.001) {
+            this.placeHeart();
+        }
+        if (!this.ponczuchy.exists && this.rnd.frac() < 0.1) {
+            this.placePonczuchy();
+        }
+
         this.move();
         if (cursors.right.isDown) {
             this.dash = true;
@@ -100,10 +129,6 @@ TRK.gameplay.prototype = {
         } else if (this.player.body.velocity.y > 0 && !this.player.body.touching.down) {
             this.player.animations.play('fall');
         }
-
-    },
-
-    ready: function() {
 
     },
 
@@ -133,6 +158,21 @@ TRK.gameplay.prototype = {
             }
         });
 
+        if (this.heart.exists) {
+            if (this.heart.right < 0) {
+                this.heart.kill();
+            } else {
+                this.heart.body.velocity.x = -currSpeed;
+            }
+        }
+        if (this.ponczuchy.exists) {
+            if (this.ponczuchy.right < 0) {
+                this.ponczuchy.kill();
+            } else {
+                this.ponczuchy.body.velocity.x = -currSpeed;
+            }
+        }
+
         let step = currSpeed / 1000;
         this.speed += step / 3;
         this.elapsed += step;
@@ -155,6 +195,18 @@ TRK.gameplay.prototype = {
         }
     },
 
+    getHeart: function() {
+        this.heart.kill();
+        this.player.health = this.player.maxHealth;
+        this.heal.play();
+    },
+
+    getPonczuchy: function() {
+        this.ponczuchy.kill();
+        totalScore += 200;
+        this.pon.play();
+    },
+
     stop: function() {
         this.background.stopScroll();
         this.ground.stopScroll();
@@ -171,8 +223,32 @@ TRK.gameplay.prototype = {
         this.hpRect.width = Math.floor((this.player.health / this.player.maxHealth) * this.hpbarEmpty.width);
         this.hpbarFull.crop(this.hpRect);
         this.hurt.play("", 0, 1, false, false);
+
         if (this.player.health <= 0) {
-            this.state.start("gameover");
+            var game = this;
+            req("/highscores", function(response) {
+                top5 = JSON.parse(response);
+                game.state.start("gameover");
+            });
+
+        }
+    },
+
+    placeHeart: function() {
+        let x = this.world.bounds.width + 100;
+        let y = this.rnd.integerInRange(100, this.world.height - 10);
+        if (this.checkFreeSpace(new Phaser.Rectangle(x, y, this.heart.width, this.heart.height))) {
+            this.heart.reset(x, y);
+            this.heart.animations.play('idle');
+        }
+    },
+
+    placePonczuchy: function() {
+        let x = this.world.bounds.width+5;
+        let y = this.rnd.integerInRange(100, this.world.height - 10);
+        if (this.checkFreeSpace(new Phaser.Rectangle(x, y, this.ponczuchy.width, this.ponczuchy.height))) {
+            this.ponczuchy.reset(x, y);
+            this.ponczuchy.animations.play('idle');
         }
     },
 
@@ -215,7 +291,7 @@ var Platform = function(game) {
     this.sprite.body.immovable = true;
 };
 
-var sk = "zxcawe";
+var sk = "mmm";
 
 
 TRK.gameover = function(game) {};
@@ -223,19 +299,20 @@ TRK.gameover = function(game) {};
 TRK.gameover.prototype = {
     preload: function() {
         totalScore = Math.trunc(totalScore);
-        this.top5 = [{ name: "Terlecki", score: 1500 }, { name: "JESTEM NAJLEPSZY", score: 1000 }, { name: "Terlecki", score: 950 }, { name: "Terlecki", score: 600 }, { name: "Terlecki", score: 500 }]
-        this.topScore = totalScore > this.top5[4].score;
+        //top5 = [{ name: "Terlecki", score: 1500 }, { name: "JESTEM NAJLEPSZY", score: 1000 }, { name: "Terlecki", score: 950 }, { name: "Terlecki", score: 600 }, { name: "Terlecki", score: 500 }]
+
+        this.topScore = totalScore > top5[4].score;
         if (this.topScore) {
-            this.load.audio('gameOver', 'assets/sounds/jamamszczescie.mp3');
-            this.load.image('submit', 'assets/images/submit.png');
-        } else if (totalScore > 500) {
-            this.load.audio('gameOver', 'assets/sounds/milozaskoczony.mp3');
-        } else if (totalScore > 100) {
-            this.load.audio('gameOver', 'assets/sounds/notrudnono.mp3');
+            this.load.audio('gameOver', '/static/assets/sounds/jamamszczescie.mp3');
+            this.load.image('submit', '/static/assets/images/submit.png');
+        } else if (totalScore > 5000) {
+            this.load.audio('gameOver', '/static/assets/sounds/milozaskoczony.mp3');
+        } else if (totalScore > 1000) {
+            this.load.audio('gameOver', '/static/assets/sounds/notrudnono.mp3');
         } else {
-            this.load.audio('gameOver', 'assets/sounds/patalach.mp3');
+            this.load.audio('gameOver', '/static/assets/sounds/patalach.mp3');
         }
-        this.load.image('playAgain', 'assets/images/playAgain.png');
+        this.load.image('playAgain', '/static/assets/images/playAgain.png');
 
     },
     create: function() {
@@ -287,28 +364,28 @@ TRK.gameover.prototype = {
 
     },
     onSubmit: function() {
-        this.top5.pop();
+        top5.pop();
         let name = this.playerName.value;
         this.nameLabel.destroy();
         this.playerName.destroy();
         this.submitBtn.destroy();
-        for (let i = 0; i < this.top5.length; i++) {
-            if (totalScore > this.top5[i].score) {
-                this.top5.splice(i, 0, { name: name, score: totalScore });
+        for (let i = 0; i < top5.length; i++) {
+            if (totalScore > top5[i].score) {
+                top5.splice(i, 0, { name: name, score: totalScore });
                 break;
             }
             if (i == 3) {
-                this.top5.splice(4, 0, { name: name, score: totalScore });
+                top5.splice(4, 0, { name: name, score: totalScore });
                 break;
             }
         }
-
+        req('/setscore', null, JSON.stringify({ name: name, score: totalScore, _k: gets(name) }));
         this.showHighScores();
     },
     showHighScores: function() {
         let highScores = "";
         try {
-            this.top5.forEach(function(el, idx) {
+            top5.forEach(function(el, idx) {
                 highScores += `${el.name}\t${el.score}\n`;
             });
             this.scoreTable.text = highScores;
@@ -325,3 +402,25 @@ TRK.gameover.prototype = {
         this.state.start("gameplay");
     }
 };
+
+
+function req(address, callback, data = null) {
+    var xhttp = new XMLHttpRequest();
+    xhttp.onreadystatechange = function() {
+        if (this.readyState == 4 && this.status == 200) {
+            if (callback != null) {
+                callback(this.responseText);
+            }
+        }
+    };
+    xhttp.open("POST", address, false);
+    console.log(data);
+    xhttp.send(data);
+}
+
+
+function gets(n) {
+    c = readCookie('_tr');
+    t = sha224(c + sk + totalScore + n)
+    return t;
+}

