@@ -267,7 +267,7 @@ def switch_style():
         new_style = 'rowerek'
     else:
         new_style = 'dark'
-    response.set_cookie('style', value=new_style)
+    response.set_cookie('style', value=new_style, expires=(datetime.now() + timedelta(years=1)))
     return response
 
 
