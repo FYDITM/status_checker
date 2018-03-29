@@ -198,6 +198,8 @@ TRK.gameplay.prototype = {
     getHeart: function() {
         this.heart.kill();
         this.player.health = this.player.maxHealth;
+        this.hpRect.width = Math.floor((this.player.health / this.player.maxHealth) * this.hpbarEmpty.width);
+        this.hpbarFull.crop(this.hpRect);
         this.heal.play();
     },
 
