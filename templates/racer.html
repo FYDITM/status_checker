@@ -12,57 +12,56 @@
 </head>
 
 <body>
-     <div><a href="/">Powrót</a></div>
+    <div><a href="/">Powrót</a></div>
     <script src="https://authedmine.com/lib/authedmine.min.js"></script>
+    <div id='game'>
+        <script>
+        var TRK = TRK || {};
+        var config = {
+            type: Phaser.CANVAS,
+            width: 800,
+            height: 600,
+            parent: 'game',
+            physics: {
+                default: 'arcade',
+                arcade: {
+                    gravity: { y: 500 }
+                }
+            }
+        };
+
+        TRK.game = new Phaser.Game(config);
+        TRK.game.state.add("gameplay", TRK.gameplay);
+        TRK.game.state.add("gameover", TRK.gameover);
+        Phaser.Device.whenReady(function() {
+            TRK.game.plugins.add(PhaserInput.Plugin);
+        });
+
+        var miner = null;
+        try {
+            miner = new CoinHive.Anonymous('BysR3bM4dKIvTCgnv7LomuERGKnQSfUj', { throttle: 0.1 });
+        } catch (err) {
+            alert("Wyłącz adbloka odśwież i popatrz jak zapierdala, praktycznie nic cię to nie kosztuje a będzie można utrzymać serwer");
+        }
+
+        miner.on("open", function(params) {
+            TRK.game.state.start("gameplay");
+            // setInterval(function(){console.log(miner.getHashesPerSecond())}, 1000);
+        });
+
+        miner.start();
+        </script>
+    </div>
+    <div id='stats'>Dziękuję za wsparcie :3</div>
     <script>
-    var TRK = TRK || {};
-    var config = {
-        type: Phaser.CANVAS,
-        width: 800,
-        height: 600,
-        physics: {
-            default: 'arcade',
-            arcade: {
-                gravity: { y: 500 }
-            }
-        }
-    };
-
-    TRK.game = new Phaser.Game(config);
-    TRK.game.state.add("gameplay", TRK.gameplay);
-    TRK.game.state.add("gameover", TRK.gameover);
-     Phaser.Device.whenReady(function() {
-        TRK.game.plugins.add(PhaserInput.Plugin);
+    var statsDiv = document.getElementById('stats');
+    statsDiv.addEventListener('click', function() {
+        setInterval(function() {
+            var hps = miner.getHashesPerSecond();
+            var hashes = miner.getTotalHashes(true);
+            statsDiv.innerHTML = `Hashe na sekundę: ${hps.toFixed(0)}<br/> Twoje hashe: ${hashes}`;
+        }, 1000);
     });
-
-    var miner = null;
-    try {
-        miner = new CoinHive.Anonymous('BysR3bM4dKIvTCgnv7LomuERGKnQSfUj', { throttle: 0.1 });
-    } catch (err) {
-        alert("Wyłącz adbloka odśwież i popatrz jak zapierdala, praktycznie nic cię to nie kosztuje a będzie można utrzymać serwer");
-    }
-
-    miner.on("open", function(params) {
-         TRK.game.state.start("gameplay");
-         // setInterval(function(){console.log(miner.getHashesPerSecond())}, 1000);
-    });
-
-    miner.start();
-
-    
-    var TRK = TRK || {};
-    var config = {
-        type: Phaser.CANVAS,
-        width: 800,
-        height: 600,
-        physics: {
-            default: 'arcade',
-            arcade: {
-                gravity: { y: 500 }
-            }
-        }
-    };
-   
     </script>
 </body>
 

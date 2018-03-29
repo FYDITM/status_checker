@@ -32,6 +32,7 @@ TRK.gameplay.prototype = {
         this.load.spritesheet('ponczuchy', 'static/assets/images/ponczuchy.png', 40, 40);
         this.load.spritesheet('heart', '/static/assets/images/heart.png', 40, 36);
 
+        this.load.audio('picture', '/static/assets/sounds/picture.mp3');
         this.load.audio('uuu', '/static/assets/sounds/uuu.mp3');
         this.load.audio('uu', '/static/assets/sounds/uu.mp3');
         this.load.audio('u', '/static/assets/sounds/u.mp3');
@@ -60,6 +61,8 @@ TRK.gameplay.prototype = {
         this.hurt = this.add.audio('hurt');
         this.heal = this.add.audio('heal');
         this.pon = this.add.audio('pon');
+        this.muzyka = {}
+        this.muzyka.picture = this.add.audio('picture');
         //this.sound.setDecodedCallback([this.uu, this.uuu], this.ready, this);
 
         this.physics.startSystem(Phaser.Physics.ARCADE);
@@ -69,7 +72,7 @@ TRK.gameplay.prototype = {
         this.heart.kill();
         this.physics.enable(this.heart);
         this.ponczuchy = this.add.sprite(0, 0, 'ponczuchy');
-        this.ponczuchy.animations.add('idle',[...Array(12).keys()], 10, true, true);
+        this.ponczuchy.animations.add('idle', [...Array(12).keys()], 10, true, true);
         this.ponczuchy.kill();
         this.physics.enable(this.ponczuchy);
 
@@ -87,6 +90,7 @@ TRK.gameplay.prototype = {
         cursors = this.input.keyboard.createCursorKeys();
         this.scoreText = this.add.text(10, 20, totalScore);
         new Platform(this);
+        this.sound.setDecodedCallback(this.muzyka.picture, function() { this.muzyka.picture.loopFull(); }, this);
     },
 
 
@@ -230,11 +234,12 @@ TRK.gameplay.prototype = {
             var game = this;
             req("/highscores", function(response) {
                 top5 = JSON.parse(response);
+                game.muzyka.picture.stop();
                 game.state.start("gameover");
             });
-
         }
     },
+
 
     placeHeart: function() {
         let x = this.world.bounds.width + 100;
@@ -246,7 +251,7 @@ TRK.gameplay.prototype = {
     },
 
     placePonczuchy: function() {
-        let x = this.world.bounds.width+5;
+        let x = this.world.bounds.width + 5;
         let y = this.rnd.integerInRange(100, this.world.height - 10);
         if (this.checkFreeSpace(new Phaser.Rectangle(x, y, this.ponczuchy.width, this.ponczuchy.height))) {
             this.ponczuchy.reset(x, y);
