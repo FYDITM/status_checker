@@ -127,11 +127,15 @@ class ChanStats:
         if nodes is None or len(nodes) < 1:
             return None
         for node in nodes:
-            postId = node.text
+            try:
+                postId = int(node.text)
+            except:
+                # na takiej megucy czasem nagłówki są puste
+                continue
             if postId:
                 postIds.append(postId)
         postIds.sort(reverse=True)
-        lastId = int(postIds[0])
+        lastId = postIds[0]
         return lastId
 
     def check_posts_per_hour(self, db):
