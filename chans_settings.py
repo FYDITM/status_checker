@@ -49,8 +49,11 @@ chans = [
     .users_online_settings("https://kornichan.xyz/online.php", "innerHTML+='", "';var")
     .last_post_settings(('b', '$', 'a', 'c', 'ku', 'r4', 'sp', 'thc', 'trv', 'vg', 'f', 'fa', 'lit', 'mu', 'dt', 'hp', 'kib', 'mil', 'pol', 'x', 'med', 's', 'waifu', 'z', 'fz', 'meta'), tinyboard_selector),
 
+    ChanStats("terchan", "terchan.ml")
+    .users_online_settings("https://terchan.ml/online.php", eStart="document.write('", eStop="'')")
+    .last_post_settings(('/',), kusaba_selector),
+
     ChanStats("chanarchive", "szonarchive.pw")
-    .set_notes("https://szonarchive.pw/")
 
     # .last_post_settings(("b","$","a","c","ku","r4","sp","thc","trv","vg","f","fa","lit","mu","dt","hp","kib","mil","pol","x","med","s","waifu","z","fz","meta"),
     #     tinyboard_selector),

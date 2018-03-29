@@ -48,7 +48,7 @@ def initialize():
 def chansort(chan):
     if not chan.OK:
         return -2
-    if chan.users_online == "n/d":
+    if chan.users_online == "n/d" or chan.users_online == '':
         return -1
     else:
         return int(chan.users_online)
