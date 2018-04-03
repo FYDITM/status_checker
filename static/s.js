@@ -3,7 +3,7 @@ TRK.gameplay = function(game) {};
 
 var readCookie = function(k) { return (document.cookie.match('(^|; )' + k + '=([^;]*)') || 0)[2]; };
 
-var totalScore = 0;
+var _ts = 0;
 
 var top5 = null;
 
@@ -21,7 +21,7 @@ TRK.gameplay.prototype = {
         this.slow = false;
         this.dash = false;
         this.dashSpeed = 300;
-        totalScore = 0;
+        _ts = 0;
     },
 
     preload: function() {
@@ -31,6 +31,8 @@ TRK.gameplay.prototype = {
         this.load.spritesheet('hpbar', '/static/assets/images/hpbar.png', 153, 26, 2);
         this.load.spritesheet('ponczuchy', 'static/assets/images/ponczuchy.png', 40, 40);
         this.load.spritesheet('heart', '/static/assets/images/heart.png', 40, 36);
+        this.load.spritesheet('kawka', '/static/assets/images/kawka.png', 50, 49);
+        this.load.spritesheet('slimak', '/static/assets/images/slimak.png', 41, 16);
 
         this.load.audio('picture', '/static/assets/sounds/picture.mp3');
         this.load.audio('uuu', '/static/assets/sounds/uuu.mp3');
@@ -39,6 +41,8 @@ TRK.gameplay.prototype = {
         this.load.audio('hurt', '/static/assets/sounds/hurt.wav');
         this.load.audio('heal', 'static/assets/sounds/heal.wav');
         this.load.audio('pon', '/static/assets/sounds/ponczuchy.mp3');
+        this.load.audio('jechane', '/static/assets/sounds/jechane.mp3');
+        this.load.audio('slimaki','static/assets/sounds/slimaki.mp3');
 
     },
 
@@ -59,22 +63,38 @@ TRK.gameplay.prototype = {
         this.uu = this.add.audio('uu');
         this.uuu = this.add.audio('uuu');
         this.hurt = this.add.audio('hurt');
-        this.heal = this.add.audio('heal');
-        this.pon = this.add.audio('pon');
         this.muzyka = {}
         this.muzyka.picture = this.add.audio('picture');
         //this.sound.setDecodedCallback([this.uu, this.uuu], this.ready, this);
 
         this.physics.startSystem(Phaser.Physics.ARCADE);
 
+        this.powerUps = [];
+
         this.heart = this.add.sprite(0, 0, 'heart');
         this.heart.animations.add('idle', [...Array(14).keys()], 10, true, true);
+        this.heart.sound = this.add.audio('heal');
         this.heart.kill();
         this.physics.enable(this.heart);
+        this.powerUps.push(this.heart);
         this.ponczuchy = this.add.sprite(0, 0, 'ponczuchy');
         this.ponczuchy.animations.add('idle', [...Array(12).keys()], 10, true, true);
+        this.ponczuchy.sound = this.add.audio('pon');
         this.ponczuchy.kill();
         this.physics.enable(this.ponczuchy);
+        this.powerUps.push(this.ponczuchy);
+        this.kawka = this.add.sprite(0, 0, 'kawka');
+        this.kawka.animations.add('idle', [0, 1, 2, 3], 10, true, true);
+        this.kawka.sound = this.add.audio('kawka');
+        this.kawka.kill();
+        this.physics.enable(this.kawka);
+        this.powerUps.push(this.kawka);
+        this.slimak = this.add.sprite(0, 0, 'slimak');
+        this.slimak.animations.add('idle', [0, 1, 2], 10, true, true);
+        this.slimak.sound = this.add.audio('slimaki');
+        this.slimak.kill();
+        this.physics.enable(this.slimak);
+        this.powerUps.push(this.slimak);
 
 
         this.physics.enable(this.player);
@@ -88,7 +108,7 @@ TRK.gameplay.prototype = {
         this.ground.body.immovable = true;
 
         cursors = this.input.keyboard.createCursorKeys();
-        this.scoreText = this.add.text(10, 20, totalScore);
+        this.scoreText = this.add.text(10, 20, _ts);
         new Platform(this);
         this.sound.setDecodedCallback(this.muzyka.picture, function() { this.muzyka.picture.loopFull(); }, this);
     },
@@ -96,18 +116,28 @@ TRK.gameplay.prototype = {
 
     update: function() {
         this.scoreText.destroy();
-        this.scoreText = this.add.text(10, 20, `punkty:\n  ${Math.trunc(totalScore)}`, { fontSize: 16 });
+        this.scoreText = this.add.text(10, 20, `punkty:\n  ${Math.trunc(_ts)}`, { fontSize: 16 });
 
         this.physics.arcade.collide(this.player, this.ground);
         this.physics.arcade.collide(this.player, this.platforms, this.collide, null, this);
         this.physics.arcade.collide(this.player, this.heart, this.getHeart, null, this);
         this.physics.arcade.collide(this.player, this.ponczuchy, this.getPonczuchy, null, this);
+        this.physics.arcade.collide(this.player, this.kawka, this.getKawka, null, this);
+        this.physics.arcade.collide(this.player, this.slimak, this.getSlimak, null, this);
 
         if (!this.heart.exists && this.rnd.frac() < 0.001) {
-            this.placeHeart();
+            this.placePowerUp(this.heart);
         }
         if (!this.ponczuchy.exists && this.rnd.frac() < 0.1) {
-            this.placePonczuchy();
+            this.placePowerUp(this.ponczuchy);
+        }
+        if (!this.kawka.exists && this.rnd.frac() < 0.01) {
+            console.log("kawka");
+            this.placePowerUp(this.kawka);
+        }
+        if (!this.slimak.exists && this.rnd.frac() < 0.01) {
+            console.log("ślimak");
+            this.placePowerUp(this.slimak);
         }
 
         this.move();
@@ -162,25 +192,20 @@ TRK.gameplay.prototype = {
             }
         });
 
-        if (this.heart.exists) {
-            if (this.heart.right < 0) {
-                this.heart.kill();
-            } else {
-                this.heart.body.velocity.x = -currSpeed;
+        this.powerUps.forEach(function(el){
+            if (el.exists) {
+                if (el.right < 0) {
+                    el.kill();
+                } else {
+                    el.body.velocity.x = -currSpeed;
+                }
             }
-        }
-        if (this.ponczuchy.exists) {
-            if (this.ponczuchy.right < 0) {
-                this.ponczuchy.kill();
-            } else {
-                this.ponczuchy.body.velocity.x = -currSpeed;
-            }
-        }
+        });
 
         let step = currSpeed / 1000;
         this.speed += step / 3;
         this.elapsed += step;
-        totalScore += step;
+        _ts += step;
         this.counter += step * 5;
 
         if (this.counter >= 100 && this.rnd.frac() < 0.4) {
@@ -200,17 +225,33 @@ TRK.gameplay.prototype = {
     },
 
     getHeart: function() {
+        this.heart.sound.play();
         this.heart.kill();
         this.player.health = this.player.maxHealth;
         this.hpRect.width = Math.floor((this.player.health / this.player.maxHealth) * this.hpbarEmpty.width);
         this.hpbarFull.crop(this.hpRect);
-        this.heal.play();
     },
 
     getPonczuchy: function() {
+        this.ponczuchy.sound.play();
         this.ponczuchy.kill();
-        totalScore += 200;
-        this.pon.play();
+        _ts += 200;
+    },
+
+    getKawka: function() {
+        this.kawka.sound.play();
+        this.kawka.kill();
+        this.kawka.modifier = 0.3 * this.speed;
+        this.speed += this.kawka.modifier;
+        setTimeout(function(){this.speed -= this.kawka.modifier}, 5000);
+    },
+
+    getSlimak: function() {
+        this.slimak.sound.play();
+        this.slimak.kill();
+        this.slimak.modifier = 0.3 * this.speed;
+        this.speed -= this.slimak.modifier;
+        setTimeout(function(){this.speed += this.slimak.modifier}, 5000);
     },
 
     stop: function() {
@@ -240,22 +281,12 @@ TRK.gameplay.prototype = {
         }
     },
 
-
-    placeHeart: function() {
-        let x = this.world.bounds.width + 100;
-        let y = this.rnd.integerInRange(100, this.world.height - 10);
-        if (this.checkFreeSpace(new Phaser.Rectangle(x, y, this.heart.width, this.heart.height))) {
-            this.heart.reset(x, y);
-            this.heart.animations.play('idle');
-        }
-    },
-
-    placePonczuchy: function() {
+    placePowerUp: function(powerUp){
         let x = this.world.bounds.width + 5;
-        let y = this.rnd.integerInRange(100, this.world.height - 10);
-        if (this.checkFreeSpace(new Phaser.Rectangle(x, y, this.ponczuchy.width, this.ponczuchy.height))) {
-            this.ponczuchy.reset(x, y);
-            this.ponczuchy.animations.play('idle');
+        let y = this.rnd.integerInRange(100, this.world.height-10);
+        if (this.checkFreeSpace(new Phaser.Rectangle(x, y, powerUp.width, powerUp.height))) {
+            powerUp.reset(x,y);
+            powerUp.animations.play('idle');
         }
     },
 
@@ -305,16 +336,16 @@ TRK.gameover = function(game) {};
 
 TRK.gameover.prototype = {
     preload: function() {
-        totalScore = Math.trunc(totalScore);
+        _ts = Math.trunc(_ts);
         //top5 = [{ name: "Terlecki", score: 1500 }, { name: "JESTEM NAJLEPSZY", score: 1000 }, { name: "Terlecki", score: 950 }, { name: "Terlecki", score: 600 }, { name: "Terlecki", score: 500 }]
 
-        this.topScore = totalScore > top5[4].score;
+        this.topScore = _ts > top5[4].score;
         if (this.topScore) {
             this.load.audio('gameOver', '/static/assets/sounds/jamamszczescie.mp3');
             this.load.image('submit', '/static/assets/images/submit.png');
-        } else if (totalScore > 5000) {
+        } else if (_ts > 5000) {
             this.load.audio('gameOver', '/static/assets/sounds/milozaskoczony.mp3');
-        } else if (totalScore > 1000) {
+        } else if (_ts > 1000) {
             this.load.audio('gameOver', '/static/assets/sounds/notrudnono.mp3');
         } else {
             this.load.audio('gameOver', '/static/assets/sounds/patalach.mp3');
@@ -328,8 +359,8 @@ TRK.gameover.prototype = {
         gameOverSound.play();
         let overText = this.add.text(this.game.width / 2, 50, "Koniec gry", { fill: "green" });
         overText.anchor.set(0.5, 0.5);
-        let totalScoreText = this.add.text(this.game.width / 2, 100, `Twój wynik: ${totalScore}`, { fill: "green" });
-        totalScoreText.anchor.set(0.5, 0.5);
+        let _tsText = this.add.text(this.game.width / 2, 100, `Twój wynik: ${_ts}`, { fill: "green" });
+        _tsText.anchor.set(0.5, 0.5);
 
         //Najlepsze wyniki
         this.hdr = this.add.text(this.game.width / 2, 150, "Najlepsze wyniki", { fill: "gray", fontSize: 18 });
@@ -377,16 +408,16 @@ TRK.gameover.prototype = {
         this.playerName.destroy();
         this.submitBtn.destroy();
         for (let i = 0; i < top5.length; i++) {
-            if (totalScore > top5[i].score) {
-                top5.splice(i, 0, { name: name, score: totalScore });
+            if (_ts > top5[i].score) {
+                top5.splice(i, 0, { name: name, score: _ts });
                 break;
             }
             if (i == 3) {
-                top5.splice(4, 0, { name: name, score: totalScore });
+                top5.splice(4, 0, { name: name, score: _ts });
                 break;
             }
         }
-        req('/setscore', null, JSON.stringify({ name: name, score: totalScore, _k: gets(name) }));
+        req('/setscore', null, JSON.stringify({ name: name, score: _ts, _k: gets(name) }));
         this.showHighScores();
     },
     showHighScores: function() {
@@ -428,6 +459,6 @@ function req(address, callback, data = null) {
 
 function gets(n) {
     c = readCookie('_tr');
-    t = sha224(c + sk + totalScore + n)
+    t = sha224(c + sk + _ts + n)
     return t;
 }
